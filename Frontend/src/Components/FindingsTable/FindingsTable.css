@@ -1,0 +1,20 @@
+.high {
+    background-color: lightcoral; /* Light red */
+  }
+  
+  .critical {
+    background-color: #8b0000; /* Blood red */
+  }
+  
+  .medium {
+    background-color: yellow;
+  }
+  
+  .low {
+    background-color: lightgreen; /* Light green */
+  }
+
+.findingsTable{
+    background-color: rgb(84, 21, 144);
+}
+  
