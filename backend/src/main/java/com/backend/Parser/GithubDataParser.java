@@ -39,6 +39,7 @@ public class GithubDataParser {
     }
 
     private List<JsonNode> simplifyGitHubData(JsonNode originalData, String tool) {
+        //To convert Java Objects to and from JSON
         ObjectMapper objectMapper = new ObjectMapper();
         List<JsonNode> simplifiedData = new ArrayList<>();
 

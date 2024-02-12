@@ -12,6 +12,7 @@ import org.springframework.data.elasticsearch.client.elc.ElasticsearchTemplate;
 import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class FindingService {
@@ -83,6 +84,7 @@ public class FindingService {
 
         for (JsonNode jsonNode : jsonNodes) {
             Findings finding = new Findings();
+
             if (jsonNode.has("findingId")) {
                 finding.setId(jsonNode.get("findingId").asLong());
             }
@@ -108,7 +110,9 @@ public class FindingService {
                 finding.setUpdated_at(jsonNode.get("updated_at").asText());
             }
 
-            findingsList.add(finding);
+            // Handling so that fixed issues get removed from the elasticsearch
+            if(!Objects.equals(finding.getState(), "fixed"))
+                findingsList.add(finding);
         }
 
         findingRepository.saveAll(findingsList);
