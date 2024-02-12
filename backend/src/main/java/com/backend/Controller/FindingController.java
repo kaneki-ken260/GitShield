@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-//@RequestMapping("/api/findings")
 @CrossOrigin(origins = "http://localhost:5173")
 public class FindingController {
 

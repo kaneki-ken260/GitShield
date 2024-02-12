@@ -1,7 +1,7 @@
 package com.backend.Service;
 
 import com.backend.Entity.Findings;
-import com.backend.Kafka.KafkaProducerService;
+//import com.backend.Kafka.KafkaProducerService;
 import com.backend.Parser.GithubDataParser;
 import com.backend.Repository.FindingRepository;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -34,8 +34,8 @@ public class FindingService {
     @Autowired
     private FindingRepository findingRepository;
 
-    @Autowired
-    private KafkaProducerService kafkaProducerService;
+//    @Autowired
+//    private KafkaProducerService kafkaProducerService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -68,9 +68,9 @@ public class FindingService {
         findingsList.addAll(secretScanFindings);
 
         // Sending the data to Kafka
-        for (JsonNode node : findingsList) {
-            kafkaProducerService.sendMessage(node.toString());
-        }
+//        for (JsonNode node : findingsList) {
+//            kafkaProducerService.sendMessage(node.toString());
+//        }
 
         //Adding all the data to the elasticsearch
         saveJsonNodes(findingsList);
