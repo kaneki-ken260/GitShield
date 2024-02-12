@@ -47,7 +47,7 @@ public class FindingService {
 //        return findingRepository.save(finding);
 //    }
 
-    public List<JsonNode> processAndSaveFindings() {
+    public Iterable<Findings> processAndSaveFindings() {
 
         List<JsonNode> findingsList = new ArrayList<>();
 
@@ -75,7 +75,7 @@ public class FindingService {
         //Adding all the data to the elasticsearch
         saveJsonNodes(findingsList);
 
-        return findingsList;
+        return findingRepository.findAll();
         }
 
     public void saveJsonNodes(List<JsonNode> jsonNodes) {
@@ -98,6 +98,16 @@ public class FindingService {
             if (jsonNode.has("tool")) {
                 finding.setTool(jsonNode.get("tool").asText());
             }
+            if (jsonNode.has("cve_value")) {
+                finding.setCve_value(jsonNode.get("cve_value").asText());
+            }
+            if (jsonNode.has("created_at")) {
+                finding.setCreated_at(jsonNode.get("created_at").asText());
+            }
+            if (jsonNode.has("updated_at")) {
+                finding.setUpdated_at(jsonNode.get("updated_at").asText());
+            }
+
             findingsList.add(finding);
         }
 

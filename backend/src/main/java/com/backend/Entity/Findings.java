@@ -26,16 +26,16 @@ public class Findings {
 
     @Column(name = "summary")
     private String summary;
-//
-//    @Column(name = "cwe")
-//    private Integer cwe;
-//
-//    @Column(name = "product_name", unique = true)
-//    private String productName;
 
-//    @ManyToOne
-//    @JoinColumn(name = "scan_id")
-//    private Scan scan;
+    @Column(name = "cve_value")
+    private String cve_value;
+
+    @Column(name = "created_at")
+    private String created_at;
+
+    @Column(name = "updated_at")
+    private String updated_at;
+
 
     // Constructors, getters, setters...
 
@@ -71,38 +71,35 @@ public class Findings {
         this.tool = tool;
     }
 
-        public String getSummary() {
+    public String getSummary() {
         return summary;
     }
 
     public void setSummary(String summary) {
         this.summary = summary;
     }
-//
-//    public Integer getCwe() {
-//        return cwe;
-//    }
-//
-//    public void setCwe(Integer cwe) {
-//        this.cwe = cwe;
-//    }
-//
-//    public String getProductName() {
-//        return productName;
-//    }
-//
-//    public void setProductName(String productName) {
-//        this.productName = productName;
-//    }
 
-//    public Scan getScan() {
-//        return scan;
-//    }
+    public String getCve_score() {
+        return cve_value;
+    }
 
-//    public void setScan(Scan scan) {
-//        this.scan = scan;
-//    }
+    public void setCve_value(String cve_value) {
+        this.cve_value = cve_value;
+    }
 
+    public String getCreated_at() {
+        return created_at;
+    }
 
-    // Add any additional fields and methods as needed
+    public void setCreated_at(String created_at) {
+        this.created_at = created_at;
+    }
+
+    public String getUpdated_at() {
+        return updated_at;
+    }
+
+    public void setUpdated_at(String updated_at) {
+        this.updated_at = updated_at;
+    }
 }

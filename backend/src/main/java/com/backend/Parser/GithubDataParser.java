@@ -49,6 +49,9 @@ public class GithubDataParser {
             simplifiedNode.put("status", extractStatus(node,tool));
             simplifiedNode.put("summary", extractSummary(node,tool));
             simplifiedNode.put("tool", extractTool(node,tool));
+            simplifiedNode.put("cve_value", extractCve(node,tool));
+            simplifiedNode.put("created_at", extractCreatedAt(node,tool));
+            simplifiedNode.put("updated_at", extractUpdatedAt(node,tool));
 
             simplifiedData.add(simplifiedNode);
         }
@@ -76,7 +79,7 @@ public class GithubDataParser {
             return securityAdvisoryNode.path("severity").asText();
 
         else
-            return null;
+            return "high";
     }
 
     private String extractStatus(JsonNode node, String tool) {
@@ -103,6 +106,39 @@ public class GithubDataParser {
 
     private String extractTool(JsonNode node, String tool) {
         return tool;
+    }
+
+    private String extractCve(JsonNode node, String tool){
+
+        JsonNode ruleNode = node.get("rule");
+        JsonNode securityAdvisoryNode = node.get("security_advisory");
+
+         if(Objects.equals(tool, "Dependabot"))
+            return securityAdvisoryNode.path("cve_id").asText();
+
+         return null;
+    }
+
+    private String extractCreatedAt(JsonNode node, String tool){
+        JsonNode ruleNode = node.get("rule");
+        JsonNode securityAdvisoryNode = node.get("security_advisory");
+
+        if(Objects.equals(tool, "Dependabot"))
+            return securityAdvisoryNode.path("published_at").asText();
+
+        else
+            return node.path("created_at").asText();
+    }
+
+    private String extractUpdatedAt(JsonNode node, String tool){
+        JsonNode ruleNode = node.get("rule");
+        JsonNode securityAdvisoryNode = node.get("security_advisory");
+
+        if(Objects.equals(tool, "Dependabot"))
+            return securityAdvisoryNode.path("updated_at").asText();
+
+        else
+            return node.path("updated_at").asText();
     }
 }
 

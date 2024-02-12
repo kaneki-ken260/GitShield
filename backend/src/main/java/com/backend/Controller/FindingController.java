@@ -32,7 +32,7 @@ public class FindingController {
     private FindingService findingService;
 
     @GetMapping("/fetch-and-save")
-    public List<JsonNode> fetchAndSaveFindings() {
+    public Iterable<Findings> fetchAndSaveFindings() {
         return findingService.processAndSaveFindings();
         //return "Processing and saving findings completed!";
     }
