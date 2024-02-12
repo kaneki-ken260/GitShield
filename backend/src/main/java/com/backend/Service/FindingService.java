@@ -22,6 +22,9 @@ public class FindingService {
     @Value("${github.api.url.dependabot}")
     private String githubApiUrlDependabot;
 
+    @Value("${github.api.url.secretScan}")
+    private String githubApiUrlSecretScan;
+
     @Value("${github.access.token}")
     private String githubAccessToken;
 
@@ -52,15 +55,17 @@ public class FindingService {
         findingRepository.deleteAll();
 
         // Fetch and parse data from CodeQL
-        List<JsonNode> codeqlFindings = githubDataParser.parseGitHubData(githubApiUrlCodeScan);
+        List<JsonNode> codeqlFindings = githubDataParser.parseGitHubData(githubApiUrlCodeScan, "CodeQL");
 
         // Fetch and parse data from Dependabot
-        List<JsonNode> dependabotFindings = githubDataParser.parseGitHubData(githubApiUrlDependabot);
+        List<JsonNode> dependabotFindings = githubDataParser.parseGitHubData(githubApiUrlDependabot, "Dependabot");
+
+        List<JsonNode> secretScanFindings = githubDataParser.parseGitHubData(githubApiUrlSecretScan, "SecretScan");
 
         // Merge the findings from both sources
         findingsList.addAll(codeqlFindings);
         findingsList.addAll(dependabotFindings);
-
+        findingsList.addAll(secretScanFindings);
 
         // Sending the data to Kafka
         for (JsonNode node : findingsList) {

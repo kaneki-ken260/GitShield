@@ -11,10 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 @Component
 public class GithubDataParser {
@@ -22,7 +19,7 @@ public class GithubDataParser {
     @Value("${github.access.token}")
     private String githubAccessToken;
 
-    public List<JsonNode> parseGitHubData(String githubApiUrl) {
+    public List<JsonNode> parseGitHubData(String githubApiUrl, String tool) {
         RestTemplate restTemplate = new RestTemplate();
 
         HttpHeaders headers = new HttpHeaders();
@@ -35,23 +32,23 @@ public class GithubDataParser {
         );
 
         if (responseEntity.getBody() != null) {
-            return simplifyGitHubData(responseEntity.getBody());
+            return simplifyGitHubData(responseEntity.getBody(), tool);
         }
 
         return null;
     }
 
-    private List<JsonNode> simplifyGitHubData(JsonNode originalData) {
+    private List<JsonNode> simplifyGitHubData(JsonNode originalData, String tool) {
         ObjectMapper objectMapper = new ObjectMapper();
         List<JsonNode> simplifiedData = new ArrayList<>();
 
         for (JsonNode node : originalData) {
             ObjectNode simplifiedNode = objectMapper.createObjectNode();
             simplifiedNode.put("findingId", generateFindingId());
-            simplifiedNode.put("severity", extractSeverity(node));
-            simplifiedNode.put("status", extractStatus(node));
-            simplifiedNode.put("summary", extractSummary(node));
-            simplifiedNode.put("tool", extractTool(node));
+            simplifiedNode.put("severity", extractSeverity(node,tool));
+            simplifiedNode.put("status", extractStatus(node,tool));
+            simplifiedNode.put("summary", extractSummary(node,tool));
+            simplifiedNode.put("tool", extractTool(node,tool));
 
             simplifiedData.add(simplifiedNode);
         }
@@ -66,52 +63,46 @@ public class GithubDataParser {
         return (long) (100000 + random.nextInt(900000)); // Ensuring 6 digits
     }
 
-    private String extractSeverity(JsonNode node) {
-        // Implement logic to extract severity based on the GitHub API response structure
+    private String extractSeverity(JsonNode node, String tool) {
 
         JsonNode ruleNode = node.get("rule");
         JsonNode securityAdvisoryNode = node.get("security_advisory");
-        JsonNode toolNode = node.get("tool");
+        //JsonNode toolNode = node.get("tool");
 
-        if(toolNode!=null)
+        if(Objects.equals(tool, "CodeQL"))
         return ruleNode.path("security_severity_level").asText();
 
-        else
+        else if(Objects.equals(tool, "Dependabot"))
             return securityAdvisoryNode.path("severity").asText();
+
+        else
+            return null;
     }
 
-    private String extractStatus(JsonNode node) {
+    private String extractStatus(JsonNode node, String tool) {
         // Implement logic to extract status based on the GitHub API response structure
         return node.path("state").asText();
     }
 
-    private String extractSummary(JsonNode node) {
+    private String extractSummary(JsonNode node, String tool) {
         // Implement logic to extract summary based on the GitHub API response structure
 
         JsonNode ruleNode = node.get("rule");
         JsonNode securityAdvisoryNode = node.get("security_advisory");
-        JsonNode toolNode = node.get("tool");
+        //JsonNode toolNode = node.get("tool");
 
-        if(toolNode!=null)
+        if(Objects.equals(tool, "CodeQL"))
         return ruleNode.path("description").asText();
 
-        else {
+        else if(Objects.equals(tool, "Dependabot"))
             return securityAdvisoryNode.path("summary").asText();
-        }
+
+        else
+            return node.path("secret_type_display_name").asText();
     }
 
-    private String extractTool(JsonNode node) {
-        // Implement logic to extract tool based on the GitHub API response structure
-        JsonNode ruleNode = node.get("rule");
-        JsonNode securityAdvisoryNode = node.get("security_advisory");
-        JsonNode toolNode = node.get("tool");
-
-        if(toolNode!=null){
-            return toolNode.path("name").asText();
-        }
-        else {
-            return "Dependabot";
-        }
+    private String extractTool(JsonNode node, String tool) {
+        return tool;
     }
 }
 
