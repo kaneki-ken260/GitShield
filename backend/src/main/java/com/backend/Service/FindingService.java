@@ -4,10 +4,8 @@ import com.backend.Entity.Findings;
 import com.backend.Kafka.KafkaProducerService;
 import com.backend.Parser.GithubDataParser;
 import com.backend.Repository.FindingRepository;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.elasticsearch.client.elc.ElasticsearchTemplate;
@@ -31,7 +29,7 @@ public class FindingService {
     private ElasticsearchTemplate elasticsearchTemplate;
 
     @Autowired
-    private FindingRepository findingRepository;  // Assuming you have a FindingRepository
+    private FindingRepository findingRepository;
 
     @Autowired
     private KafkaProducerService kafkaProducerService;
@@ -42,13 +40,16 @@ public class FindingService {
     @Autowired
     private GithubDataParser githubDataParser;
 
-    public Findings saveFinding(Findings finding) {
-        return findingRepository.save(finding);
-    }
+//    public Findings saveFinding(Findings finding) {
+//        return findingRepository.save(finding);
+//    }
 
     public List<JsonNode> processAndSaveFindings() {
 
         List<JsonNode> findingsList = new ArrayList<>();
+
+        //Deleting all data from the elasticsearch
+        findingRepository.deleteAll();
 
         // Fetch and parse data from CodeQL
         List<JsonNode> codeqlFindings = githubDataParser.parseGitHubData(githubApiUrlCodeScan);
@@ -60,9 +61,43 @@ public class FindingService {
         findingsList.addAll(codeqlFindings);
         findingsList.addAll(dependabotFindings);
 
+
+        // Sending the data to Kafka
+        for (JsonNode node : findingsList) {
+            kafkaProducerService.sendMessage(node.toString());
+        }
+
+        //Adding all the data to the elasticsearch
+        saveJsonNodes(findingsList);
+
         return findingsList;
         }
 
+    public void saveJsonNodes(List<JsonNode> jsonNodes) {
+        List<Findings> findingsList = new ArrayList<>();
+
+        for (JsonNode jsonNode : jsonNodes) {
+            Findings finding = new Findings();
+            if (jsonNode.has("findingId")) {
+                finding.setId(jsonNode.get("findingId").asLong());
+            }
+            if (jsonNode.has("severity")) {
+                finding.setSecuritySeverityLevel(jsonNode.get("severity").asText());
+            }
+            if (jsonNode.has("status")) {
+                finding.setState(jsonNode.get("status").asText());
+            }
+            if (jsonNode.has("summary")) {
+                finding.setSummary(jsonNode.get("summary").asText());
+            }
+            if (jsonNode.has("tool")) {
+                finding.setTool(jsonNode.get("tool").asText());
+            }
+            findingsList.add(finding);
+        }
+
+        findingRepository.saveAll(findingsList);
+    }
     public void deleteAllFindings() {
         findingRepository.deleteAll();
     }
