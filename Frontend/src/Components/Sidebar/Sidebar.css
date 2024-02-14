@@ -1,0 +1,43 @@
+.sidebar {
+    display: flex;
+    height: 100%;
+    transition: width 0.2s ease-in-out;
+    background: linear-gradient(to bottom, #4e54c8, #8f94fb); /* Gradient colors */
+  }
+  
+  .sidebar.closed {
+    width: 60px; /* Adjust as needed */
+  }
+  
+  .menu-icon {
+    cursor: pointer;
+    padding: 10px;
+  }
+  
+  /* Styles for Drawer */
+  .MuiDrawer-paper {
+    width: 240px; /* Adjust as needed */
+  }
+  
+  /* Styles for ListItems */
+  .MuiListItem-root:hover {
+    background-color: #f0f0f0;
+  }
+  
+  /* Styles for ListItemIcons */
+  .MuiSvgIcon-root {
+    color: #555; /* Adjust icon color */
+  }
+  
+  .dashboard-image-container {
+    display: flex;
+    justify-content: center;
+  }
+  
+  .dashboard-image {
+    width: 80%; /* Adjust image width as needed */
+  }
+  
+
+
+          

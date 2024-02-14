@@ -1,17 +1,26 @@
 /* App.css */
+
 .app-container {
   display: flex;
 }
 
-.content-container {
-  padding: 20px;
-  box-sizing: border-box;
-  flex: 1;
+.sidebar {
+
 }
 
+.content-container {
+  margin-left: 100px; /* Adjust this value to create the desired gap */
+  padding: 20px; /* Optional: Add padding to the content */
+}
+
+
 body{
-  background-color: rgb(203, 63, 242);
+  background-color: rgb(14, 20, 137);
   margin: 0;
+}
+
+.finding-heading{
+  color: white;
 }
 
 

@@ -11,7 +11,7 @@ const App = () => {
         <Sidebar />
       </div>
       <div className="content-container">
-        <h1>Findings Page</h1>
+        <h1 className='finding-heading'>Findings Page</h1>
         <FindingsTable />
       </div>
     </div>
