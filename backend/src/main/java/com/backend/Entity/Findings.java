@@ -1,41 +1,57 @@
 package com.backend.Entity;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.elasticsearch.annotations.Document;
+import org.springframework.data.elasticsearch.annotations.Field;
 
 @AllArgsConstructor
 @Data
 @NoArgsConstructor
-@Document(indexName = "findings")
+@Document(indexName = "ritwikarmor")
 public class Findings {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "security_severity_level")
-    private String security_severity_Level;
+    @Field
+    private String severity;
 
-    @Column(name = "state")
-    private String state;
+    @Field
+    private String status;
 
-    @Column(name="tool")
+    @Field
     private String tool;
 
-    @Column(name = "summary")
+    @Field
     private String summary;
 
-    @Column(name = "cve_value")
-    private String cve_value;
+    @Field
+    private String cve_id;
 
-    @Column(name = "created_at")
-    private String created_at;
+    @Field
+    private String pathIssue;
+    @Field
+    private String startColumn;
 
-    @Column(name = "updated_at")
-    private String updated_at;
+    @Field
+    private String endColumn;
 
+    @Field
+    private String startLine;
+
+    @Field
+    private String endLine;
+
+    @Field
+    private String secretType;
+
+    @Field
+    private String secret;
 
     // Constructors, getters, setters...
 
@@ -47,20 +63,20 @@ public class Findings {
         this.id = id;
     }
 
-    public String getSecuritySeverityLevel() {
-        return security_severity_Level;
+    public String getSeverity() {
+        return severity;
     }
 
-    public void setSecuritySeverityLevel(String securitySeverityLevel) {
-        this.security_severity_Level = securitySeverityLevel;
+    public void setSeverity(String securitySeverityLevel) {
+        this.severity = securitySeverityLevel;
     }
 
-    public String getState() {
-        return state;
+    public String getStatus() {
+        return status;
     }
 
-    public void setState(String status) {
-        this.state = status;
+    public void setStatus(String status) {
+        this.status = status;
     }
 
     public String getTool() {
@@ -79,27 +95,80 @@ public class Findings {
         this.summary = summary;
     }
 
-    public String getCve_score() {
-        return cve_value;
+    public String getCve_id() {
+        return cve_id;
     }
 
-    public void setCve_value(String cve_value) {
-        this.cve_value = cve_value;
+    public void setCve_id(String cve_id) {
+        this.cve_id = cve_id;
     }
 
-    public String getCreated_at() {
-        return created_at;
+    public String getSecurity_severity_Level() {
+        return severity;
     }
 
-    public void setCreated_at(String created_at) {
-        this.created_at = created_at;
+    public void setSecurity_severity_Level(String severity) {
+        this.severity = severity;
     }
 
-    public String getUpdated_at() {
-        return updated_at;
+    public String getPathIssue() {
+        return pathIssue;
     }
 
-    public void setUpdated_at(String updated_at) {
-        this.updated_at = updated_at;
+    public void setPathIssue(String pathIssue) {
+        this.pathIssue = pathIssue;
+    }
+
+    public String getStartColumn() {
+        return startColumn;
+    }
+
+    public void setStartColumn(String startColumn) {
+        this.startColumn = startColumn;
+    }
+
+    public String getEndColumn() {
+        return endColumn;
+    }
+
+    public void setEndColumn(String endColumn) {
+        this.endColumn = endColumn;
+    }
+
+    public String getStartLine() {
+        return startLine;
+    }
+
+    public void setStartLine(String startLine) {
+        this.startLine = startLine;
+    }
+
+    public String getSecretType() {
+        return secretType;
+    }
+
+    public void setSecretType(String secretType) {
+        this.secretType = secretType;
+    }
+
+    public String getSecret() {
+        return secret;
+    }
+
+    public void setSecret(String secret) {
+        this.secret = secret;
+    }
+
+    public String getEndLine() {
+        return endLine;
+    }
+
+    public void setEndLine(String endLine) {
+        this.endLine = endLine;
+    }
+
+    public JsonNode convertFindingsToJsonNode(Findings finding) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        return objectMapper.convertValue(finding, JsonNode.class);
     }
 }

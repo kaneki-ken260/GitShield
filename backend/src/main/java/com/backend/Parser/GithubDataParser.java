@@ -11,6 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 @Component
@@ -45,14 +47,20 @@ public class GithubDataParser {
 
         for (JsonNode node : originalData) {
             ObjectNode simplifiedNode = objectMapper.createObjectNode();
-            simplifiedNode.put("findingId", generateFindingId());
+            simplifiedNode.put("id", generateFindingId());
             simplifiedNode.put("severity", extractSeverity(node,tool));
             simplifiedNode.put("status", extractStatus(node,tool));
             simplifiedNode.put("summary", extractSummary(node,tool));
             simplifiedNode.put("tool", extractTool(node,tool));
-            simplifiedNode.put("cve_value", extractCve(node,tool));
-            simplifiedNode.put("created_at", extractCreatedAt(node,tool));
-            simplifiedNode.put("updated_at", extractUpdatedAt(node,tool));
+            simplifiedNode.put("cve_id", extractCve(node,tool));
+            simplifiedNode.put("pathIssue", extractPath(node,tool));
+            simplifiedNode.put("startColumn", extractStartColumn(node,tool));
+            simplifiedNode.put("endColumn", extractEndColumn(node,tool));
+            simplifiedNode.put("startLine", extractStartLine(node,tool));
+            simplifiedNode.put("endLine", extractEndLine(node,tool));
+//            simplifiedNode.put("ecosystem", extractEcoSystem(node,tool));
+            simplifiedNode.put("secretType", extractSecretType(node,tool));
+            simplifiedNode.put("secret", extractSecret(node,tool));
 
             simplifiedData.add(simplifiedNode);
         }
@@ -61,8 +69,6 @@ public class GithubDataParser {
     }
 
     private Long generateFindingId() {
-        // Implement logic to generate a unique finding ID
-
         Random random = new Random();
         return (long) (100000 + random.nextInt(900000)); // Ensuring 6 digits
     }
@@ -111,7 +117,7 @@ public class GithubDataParser {
 
     private String extractCve(JsonNode node, String tool){
 
-        JsonNode ruleNode = node.get("rule");
+//        JsonNode ruleNode = node.get("rule");
         JsonNode securityAdvisoryNode = node.get("security_advisory");
 
          if(Objects.equals(tool, "Dependabot"))
@@ -120,26 +126,78 @@ public class GithubDataParser {
          return null;
     }
 
-    private String extractCreatedAt(JsonNode node, String tool){
-        JsonNode ruleNode = node.get("rule");
-        JsonNode securityAdvisoryNode = node.get("security_advisory");
+    private String extractPath(JsonNode node, String tool){
+        JsonNode mostRecentInstance = node.path("most_recent_instance");
+        JsonNode locationNode = mostRecentInstance.path("location");
 
-        if(Objects.equals(tool, "Dependabot"))
-            return securityAdvisoryNode.path("published_at").asText();
-
-        else
-            return node.path("created_at").asText();
+        if(Objects.equals(tool,"CodeQL"))
+        {
+            return locationNode.path("path").asText();
+        }
+        return null;
     }
 
-    private String extractUpdatedAt(JsonNode node, String tool){
-        JsonNode ruleNode = node.get("rule");
-        JsonNode securityAdvisoryNode = node.get("security_advisory");
+    private String extractStartColumn(JsonNode node, String tool){
+        JsonNode mostRecentInstance = node.path("most_recent_instance");
+        JsonNode locationNode = mostRecentInstance.path("location");
 
-        if(Objects.equals(tool, "Dependabot"))
-            return securityAdvisoryNode.path("updated_at").asText();
+        if(Objects.equals(tool,"CodeQL"))
+        {
+            return locationNode.path("start_column").asText();
+        }
+        return null;
+    }
 
-        else
-            return node.path("updated_at").asText();
+    private String extractEndColumn(JsonNode node, String tool){
+
+        JsonNode mostRecentInstance = node.path("most_recent_instance");
+        JsonNode locationNode = mostRecentInstance.path("location");
+
+        if(Objects.equals(tool,"CodeQL"))
+        {
+            return locationNode.path("end_column").asText();
+        }
+        return null;
+    }
+
+    private String extractStartLine(JsonNode node, String tool){
+
+        JsonNode mostRecentInstance = node.path("most_recent_instance");
+        JsonNode locationNode = mostRecentInstance.path("location");
+
+        if(Objects.equals(tool,"CodeQL"))
+        {
+            return locationNode.path("start_line").asText();
+        }
+        return null;
+    }
+
+    private String extractEndLine(JsonNode node, String tool){
+
+        JsonNode mostRecentInstance = node.path("most_recent_instance");
+        JsonNode locationNode = mostRecentInstance.path("location");
+
+        if(Objects.equals(tool,"CodeQL"))
+        {
+            return locationNode.path("end_line").asText();
+        }
+        return null;
+    }
+
+    private String extractSecretType(JsonNode node, String tool){
+
+        if(Objects.equals(tool,"SecretScan")){
+            return node.path("secret_type").asText();
+        }
+        return null;
+    }
+
+    private String extractSecret(JsonNode node, String tool){
+
+        if(Objects.equals(tool,"SecretScan")){
+            return node.path("secret").asText();
+        }
+        return null;
     }
 }
 

@@ -11,8 +11,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.elasticsearch.client.elc.ElasticsearchTemplate;
 import org.springframework.stereotype.Service;
 import java.util.ArrayList;
+import java.util.Hashtable;
 import java.util.List;
-import java.util.Objects;
 
 @Service
 public class FindingService {
@@ -44,6 +44,9 @@ public class FindingService {
     @Autowired
     private GithubDataParser githubDataParser;
 
+    @Autowired
+    private HashService hashService;
+
 //    public Findings saveFinding(Findings finding) {
 //        return findingRepository.save(finding);
 //    }
@@ -53,7 +56,7 @@ public class FindingService {
         List<JsonNode> findingsList = new ArrayList<>();
 
         //Deleting all data from the elasticsearch
-        findingRepository.deleteAll();
+        //findingRepository.deleteAll();
 
         // Fetch and parse data from CodeQL
         List<JsonNode> codeqlFindings = githubDataParser.parseGitHubData(githubApiUrlCodeScan, "CodeQL");
@@ -74,25 +77,79 @@ public class FindingService {
 //        }
 
         //Adding all the data to the elasticsearch
-        saveJsonNodes(findingsList);
+//        saveJsonNodes(findingsList);
 
+        //Create HashTable and store Hash for each issue in ES
+        Iterable<Findings> findingsInElasticSearch = findingRepository.findAll();
+        Hashtable<String, Findings> hashtable = new Hashtable<>();
+
+        for (Findings finding : findingsInElasticSearch) {
+            String hashValue = hashService.generateHashValue(finding.convertFindingsToJsonNode(finding));
+            hashtable.put(hashValue, finding);
+//            System.out.println(hashValue);
+        }
+
+        //Iterate through findingsList and generate its hash and check if it is present in HashTable or not
+        // If yes then check the status has changed or not -> if yes then remove the entry from es and add this new one or else discard
+        // If no then save this issue in ES
+
+        for (JsonNode findingFromGithub: findingsList){
+            String currHash = hashService.generateHashValue(findingFromGithub);
+//            System.out.println(currHash);
+            if(hashtable.containsKey(currHash))
+            {
+                String stateInELasticSearch = hashtable.get(currHash).getStatus();
+                String stateInFindingFromGithub = findingFromGithub.get("status").asText();
+
+                if(!stateInELasticSearch.equals(stateInFindingFromGithub)) //State has changed
+                {
+                    findingRepository.deleteById(hashtable.get(currHash).getId());
+                    saveJsonNode(findingFromGithub);
+                }
+            }
+
+            else
+            {
+                saveJsonNode(findingFromGithub);
+                hashtable.put(currHash,convertJsonNodeToFindings(findingFromGithub));
+            }
+        }
+
+        // Filtering the queries.
         return findingRepository.findAll();
         }
 
-    public void saveJsonNodes(List<JsonNode> jsonNodes) {
-        List<Findings> findingsList = new ArrayList<>();
+        public String getMappingForSeverity(String severity){
+            return switch (severity) {
+                case "critical" -> "critical";
+                case "high" -> "high";
+                case "medium" -> "medium";
+                case "low" -> "low";
+                case "warning", "error" -> "info";
+                default -> "False Positive";
+            };
+        }
 
-        for (JsonNode jsonNode : jsonNodes) {
+        public String getMappingForStatus(String status){
+            return switch (status) {
+                case "open" -> "open";
+                case "fixed", "dismissed" -> "fixed";
+                default -> "False Positive";
+            };
+        }
+
+    public void saveJsonNode(JsonNode jsonNode) {
+
             Findings finding = new Findings();
 
-            if (jsonNode.has("findingId")) {
-                finding.setId(jsonNode.get("findingId").asLong());
+            if (jsonNode.has("id")) {
+                finding.setId(jsonNode.get("id").asLong());
             }
             if (jsonNode.has("severity")) {
-                finding.setSecuritySeverityLevel(jsonNode.get("severity").asText());
+                finding.setSeverity(getMappingForSeverity(jsonNode.get("severity").asText()));
             }
             if (jsonNode.has("status")) {
-                finding.setState(jsonNode.get("status").asText());
+                finding.setStatus(getMappingForStatus(jsonNode.get("status").asText()));
             }
             if (jsonNode.has("summary")) {
                 finding.setSummary(jsonNode.get("summary").asText());
@@ -100,24 +157,101 @@ public class FindingService {
             if (jsonNode.has("tool")) {
                 finding.setTool(jsonNode.get("tool").asText());
             }
-            if (jsonNode.has("cve_value")) {
-                finding.setCve_value(jsonNode.get("cve_value").asText());
+            if (jsonNode.has("cve_id")) {
+                finding.setCve_id(jsonNode.get("cve_id").asText());
             }
-            if (jsonNode.has("created_at")) {
-                finding.setCreated_at(jsonNode.get("created_at").asText());
+            if (jsonNode.has("pathIssue")) {
+                finding.setPathIssue(jsonNode.get("pathIssue").asText());
             }
-            if (jsonNode.has("updated_at")) {
-                finding.setUpdated_at(jsonNode.get("updated_at").asText());
+            if (jsonNode.has("startColumn")) {
+                finding.setStartColumn(jsonNode.get("startColumn").asText());
+            }
+            if (jsonNode.has("endColumn")) {
+                finding.setEndColumn(jsonNode.get("endColumn").asText());
+            }
+            if (jsonNode.has("startLine")) {
+                finding.setStartLine(jsonNode.get("startLine").asText());
+            }
+            if (jsonNode.has("endLine")) {
+                finding.setEndLine(jsonNode.get("endLine").asText());
+            }
+            if (jsonNode.has("secretType")) {
+                finding.setSecretType(jsonNode.get("secretType").asText());
+            }
+            if (jsonNode.has("secret")) {
+                finding.setSecret(jsonNode.get("secret").asText());
             }
 
-            // Handling so that fixed issues get removed from the elasticsearch
-            if(!Objects.equals(finding.getState(), "fixed"))
-                findingsList.add(finding);
-        }
+        findingRepository.save(finding);
+    }
 
-        findingRepository.saveAll(findingsList);
+    // Basically to handle the filters from the frontend part
+    private boolean findingMatchesCriteria(Findings finding,
+                                           String selectedTool,
+                                           String selectedSeverity,
+                                           String selectedStatus) {
+        // Tool filter
+        boolean toolMatches = selectedTool == null || selectedTool.isEmpty() || finding.getTool().equalsIgnoreCase(selectedTool);
+
+        // Severity filter
+        boolean severityMatches = selectedSeverity == null || selectedSeverity.isEmpty() || finding.getSeverity().equalsIgnoreCase(selectedSeverity);
+
+        // Status filter
+        boolean statusMatches = selectedStatus == null || selectedStatus.isEmpty() || finding.getStatus().equalsIgnoreCase(selectedStatus);
+
+        // Return true if all criteria match
+        return toolMatches && severityMatches && statusMatches;
     }
     public void deleteAllFindings() {
         findingRepository.deleteAll();
+    }
+
+    public Findings convertJsonNodeToFindings(JsonNode jsonNode) {
+
+        if(jsonNode == null) return null;
+
+        Findings finding = new Findings();
+
+        if (jsonNode.has("id")) {
+            finding.setId(jsonNode.get("id").asLong());
+        }
+        if (jsonNode.has("severity")) {
+            finding.setSeverity(getMappingForSeverity(jsonNode.get("severity").asText()));
+        }
+        if (jsonNode.has("status")) {
+            finding.setStatus(getMappingForStatus(jsonNode.get("status").asText()));
+        }
+        if (jsonNode.has("summary")) {
+            finding.setSummary(jsonNode.get("summary").asText());
+        }
+        if (jsonNode.has("tool")) {
+            finding.setTool(jsonNode.get("tool").asText());
+        }
+        if (jsonNode.has("cve_id")) {
+            finding.setCve_id(jsonNode.get("cve_id").asText());
+        }
+        if (jsonNode.has("pathIssue")) {
+            finding.setPathIssue(jsonNode.get("pathIssue").asText());
+        }
+        if (jsonNode.has("startColumn")) {
+            finding.setStartColumn(jsonNode.get("startColumn").asText());
+        }
+        if (jsonNode.has("endColumn")) {
+            finding.setEndColumn(jsonNode.get("endColumn").asText());
+        }
+        if (jsonNode.has("startLine")) {
+            finding.setStartLine(jsonNode.get("startLine").asText());
+        }
+        if (jsonNode.has("endLine")) {
+            finding.setEndLine(jsonNode.get("endLine").asText());
+        }
+        if (jsonNode.has("secretType")) {
+            finding.setSecretType(jsonNode.get("secretType").asText());
+        }
+        if (jsonNode.has("secret")) {
+            finding.setSecret(jsonNode.get("secret").asText());
+        }
+
+        return finding;
     }
 }
