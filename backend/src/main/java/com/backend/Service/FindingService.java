@@ -8,6 +8,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.client.elc.ElasticsearchTemplate;
 import org.springframework.stereotype.Service;
 import java.util.ArrayList;
@@ -50,6 +52,39 @@ public class FindingService {
 //    public Findings saveFinding(Findings finding) {
 //        return findingRepository.save(finding);
 //    }
+
+    public Page<Findings> getAllFindings(Pageable pageable){
+        return findingRepository.findAll(pageable);
+    }
+
+    public Page<Findings> getFindingsForSeverity(String severity, Pageable pageable){
+        return findingRepository.findBySeverity(severity,pageable);
+    }
+
+    public Page<Findings> getFindingsForTool(String tool, Pageable pageable){
+        return findingRepository.findByTool(tool,pageable);
+    }
+
+    public Page<Findings> getFindingsForStatus(String status, Pageable pageable){
+        return findingRepository.findByTool(status,pageable);
+    }
+
+    public Page<Findings> getFindingsForSeverityAndTool(String severity, String tool, Pageable pageable){
+        return findingRepository.findBySeverityAndTool(severity,tool,pageable);
+    }
+
+    public Page<Findings> getFindingsForSeverityAndStatus(String severity, String status, Pageable pageable){
+        return findingRepository.findBySeverityAndStatus(severity,status,pageable);
+    }
+
+    public Page<Findings> getFindingsForToolAndStatus(String tool, String status, Pageable pageable){
+        return findingRepository.findByToolAndStatus(tool,status,pageable);
+    }
+
+    public Page<Findings> getFindingsForSeverityAndToolAndStatus(String severity, String tool, String status, Pageable pageable){
+        return findingRepository.findBySeverityAndToolAndStatus(severity,tool,status,pageable);
+    }
+
 
     public Iterable<Findings> processAndSaveFindings() {
 
@@ -133,7 +168,7 @@ public class FindingService {
         public String getMappingForStatus(String status){
             return switch (status) {
                 case "open" -> "open";
-                case "fixed", "dismissed" -> "fixed";
+                case "fixed", "dismissed" -> "mitigated";
                 default -> "False Positive";
             };
         }
