@@ -42,21 +42,20 @@ public class FindingController {
 
         Pageable pageable = PageRequest.of(page, size);
 
-        if(!severity.isEmpty() && !tool.isEmpty()){
-            if(severity.equals("All") && tool.equals("All")) return findingService.getAllFindings(pageable);
-            else if(severity.equals("All")) return findingService.getFindingsForTool(tool,pageable);
-            else if(tool.equals("All")) return findingService.getFindingsForSeverity(severity,pageable);
-            else return findingService.getFindingsForSeverityAndTool(severity,tool,pageable);
-        }
-
-        else if(!severity.isEmpty()){
-            if(severity.equals("All")) return findingService.getAllFindings(pageable);
-            else return findingService.getFindingsForSeverity(severity,pageable);
-        }
-
-        else if(!tool.isEmpty()){
-            if(tool.equals("All")) return findingService.getAllFindings(pageable);
-            else return findingService.getFindingsForTool(tool,pageable);
+        if (severity != null && tool != null) {
+            if (severity.isEmpty() && tool.isEmpty()) {
+                return findingService.getAllFindings(pageable);
+            } else if (severity.isEmpty()) {
+                return findingService.getFindingsForTool(tool, pageable);
+            } else if (tool.isEmpty()) {
+                return findingService.getFindingsForSeverity(severity, pageable);
+            } else {
+                return findingService.getFindingsForSeverityAndTool(severity, tool, pageable);
+            }
+        } else if (severity != null && severity.isEmpty()) {
+            return findingService.getAllFindings(pageable);
+        } else if (tool != null && tool.isEmpty()) {
+            return findingService.getAllFindings(pageable);
         }
         return findingService.getAllFindings(pageable);
     }
@@ -64,6 +63,65 @@ public class FindingController {
     @GetMapping("/fetch-and-save")
     public Iterable<Findings> fetchAndSaveFindings() {
         return findingService.processAndSaveFindings();
+    }
+
+    @GetMapping("/allFindings")
+    public Page<Findings> getTotalFindings(@RequestParam(defaultValue = "0", required = false) int currentPage,
+                                            @RequestParam(defaultValue = "200", required = false) int pageSize) {
+
+        currentPage = Math.max(currentPage, 0);
+
+
+        // Create pageable object with provided page number, size, and sorting (if needed)
+        Pageable pageable = PageRequest.of(currentPage, pageSize);
+
+        return findingService.getAllFindings(pageable);
+
+    }
+
+    @GetMapping("/codeQLFindings")
+    public Page<Findings> getCodeQLFindings(@RequestParam(defaultValue = "0", required = false) int currentPage,
+                                            @RequestParam(defaultValue = "200", required = false) int pageSize) {
+        // Ensure that page number is not less than 0
+        String tool = "codeQL";
+        currentPage = Math.max(currentPage, 0);
+
+
+        // Create pageable object with provided page number, size, and sorting (if needed)
+        Pageable pageable = PageRequest.of(currentPage, pageSize);
+
+        return findingService.getFindingsForTool(tool, pageable);
+
+    }
+
+    @GetMapping("/dependabotFindings")
+    public Page<Findings> getDependabotFindings(@RequestParam(defaultValue = "0", required = false) int currentPage,
+                                                @RequestParam(defaultValue = "200", required = false) int pageSize) {
+        // Ensure that page number is not less than 0
+        String tool = "dependabot";
+        currentPage = Math.max(currentPage, 0);
+
+
+        // Create pageable object with provided page number, size, and sorting (if needed)
+        Pageable pageable = PageRequest.of(currentPage, pageSize);
+
+        return findingService.getFindingsForTool(tool, pageable);
+
+    }
+
+    @GetMapping("/secretScanningFindings")
+    public Page<Findings> getSecretScanningFindings(@RequestParam(defaultValue = "0", required = false) int currentPage,
+                                                    @RequestParam(defaultValue = "200", required = false) int pageSize ) {
+        // Ensure that page number is not less than 0
+        String tool = "secret scanning";
+        currentPage = Math.max(currentPage, 0);
+
+
+        // Create pageable object with provided page number, size, and sorting (if needed)
+        Pageable pageable = PageRequest.of(currentPage, pageSize);
+
+        return findingService.getFindingsForTool(tool, pageable);
+
     }
 
     @DeleteMapping("/delete-all")

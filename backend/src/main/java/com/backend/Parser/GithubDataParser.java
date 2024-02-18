@@ -61,6 +61,8 @@ public class GithubDataParser {
 //            simplifiedNode.put("ecosystem", extractEcoSystem(node,tool));
             simplifiedNode.put("secretType", extractSecretType(node,tool));
             simplifiedNode.put("secret", extractSecret(node,tool));
+            simplifiedNode.put("createdAt", extractCreatedAt(node,tool));
+            simplifiedNode.put("updatedAt", extractUpdatedAt(node,tool));
 
             simplifiedData.add(simplifiedNode);
         }
@@ -198,6 +200,14 @@ public class GithubDataParser {
             return node.path("secret").asText();
         }
         return null;
+    }
+
+    private String extractCreatedAt(JsonNode node, String tool){
+            return node.path("created_at").asText();
+    }
+
+    private String extractUpdatedAt(JsonNode node, String tool){
+            return node.path("updated_at").asText();
     }
 }
 

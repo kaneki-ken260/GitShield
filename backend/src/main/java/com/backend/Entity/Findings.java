@@ -12,7 +12,7 @@ import org.springframework.data.elasticsearch.annotations.Field;
 @AllArgsConstructor
 @Data
 @NoArgsConstructor
-@Document(indexName = "ritwikarmor")
+@Document(indexName = "ritwikcapstone")
 public class Findings {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -32,6 +32,28 @@ public class Findings {
 
     @Field
     private String cve_id;
+
+    public String getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(String createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public String getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(String updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    @Field
+    private String createdAt;
+
+    @Field
+    private String updatedAt;
 
     @Field
     private String pathIssue;

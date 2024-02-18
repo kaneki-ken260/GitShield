@@ -216,6 +216,12 @@ public class FindingService {
             if (jsonNode.has("secret")) {
                 finding.setSecret(jsonNode.get("secret").asText());
             }
+            if (jsonNode.has("createdAt")) {
+                finding.setCreatedAt(jsonNode.get("createdAt").asText());
+            }
+            if (jsonNode.has("updatedAt")) {
+                finding.setUpdatedAt(jsonNode.get("updatedAt").asText());
+            }
 
         findingRepository.save(finding);
     }
@@ -285,6 +291,12 @@ public class FindingService {
         }
         if (jsonNode.has("secret")) {
             finding.setSecret(jsonNode.get("secret").asText());
+        }
+        if (jsonNode.has("createdAt")) {
+            finding.setCreatedAt(jsonNode.get("createdAt").asText());
+        }
+        if (jsonNode.has("updatedAt")) {
+            finding.setUpdatedAt(jsonNode.get("updatedAt").asText());
         }
 
         return finding;
