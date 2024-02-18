@@ -1,14 +1,31 @@
 import { ResponsivePie } from "@nivo/pie";
 import { tokens } from "../theme";
 import { useTheme } from "@mui/material";
-import { mockPieData as data } from "../data/mockData";
 
-const PieChart = () => {
+const PieChart = ({ findings}) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
+
+  if (findings == null) return null;
+
+  // Calculate the count of each status
+  const statusCounts = findings.reduce((acc, curr) => {
+    acc[curr.status] = (acc[curr.status] || 0) + 1;
+    return acc;
+  }, {});
+
+  // Convert the status counts into an array of objects for pie chart data
+  const pieData = Object.keys(statusCounts).map((status) => ({
+    id: status,
+    label: status,
+    value: statusCounts[status],
+  }));
+
+  console.log(pieData);
+
   return (
     <ResponsivePie
-      data={data}
+      data={pieData}
       theme={{
         axis: {
           domain: {

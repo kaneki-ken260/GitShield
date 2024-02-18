@@ -1,9 +1,25 @@
 import React, { useState, useEffect } from "react";
-import { Box, Typography, useTheme, FormControl, InputLabel, Select, MenuItem, Button } from "@mui/material";
-import { DataGrid } from "@mui/x-data-grid";
-import { tokens } from "../../theme";
+import {
+  Box,
+  Typography,
+  useTheme,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Button,
+} from "@mui/material";
+import { ColorModeContext, tokens } from "../../theme";
 import Header from "../../components/Header";
-import CircularProgress from '@mui/material/CircularProgress';
+import CircularProgress from "@mui/material/CircularProgress";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TableRow from "@mui/material/TableRow";
+import Paper from "@mui/material/Paper";
+import Pagination from "@mui/material/Pagination";
 
 const Team = () => {
   const theme = useTheme();
@@ -18,27 +34,18 @@ const Team = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  const columns = [
-    { field: "id", headerName: "Finding Id" },
-    { field: "severity", headerName: "Severity", type: "text", headerAlign: "left", align: "left" },
-    { field: "status", headerName: "Status", flex: 1 },
-    { field: "summary", headerName: "Summary", flex: 1 },
-    { field: "tool", headerName: "Tool", flex: 1 },
-    { field: "cve_id", headerName: "CVE ID", flex: 1 },
-    { field: "pathIssue", headerName: "Path", flex: 1 }
-  ];
-
   const fetchData = async () => {
     try {
-      const response = await fetch(`http://localhost:8090/fetchFindings?page=${currentPage}&size=${pageSize}&severity=${severity}&tool=${tool}&status=${status}`);
-      const jsonResponse  = await response.json();
+      const response = await fetch(
+        `http://localhost:8090/fetchFindings?page=${currentPage}&size=${pageSize}&severity=${severity}&tool=${tool}&status=${status}`
+      );
+      const jsonResponse = await response.json();
       setFindings(jsonResponse.content);
-      console.log(jsonResponse);
-      // setTotalPages(response.data.totalPages);
+      setTotalPages(jsonResponse.totalPages);
       setLoading(true);
     } catch (error) {
       setError(error);
-      console.error('Error fetching data:', error);
+      console.error("Error fetching data:", error);
     } finally {
       setLoading(false);
     }
@@ -58,7 +65,7 @@ const Team = () => {
 
   useEffect(() => {
     fetchData();
-  }, [currentPage,pageSize,severity, tool]);
+  }, [currentPage, pageSize, severity, tool, status]);
 
   const handleScanNowClick = async () => {
     try {
@@ -73,21 +80,23 @@ const Team = () => {
     }
   };
 
-  const handlePageChange = (newPage) => {
-    setCurrentPage(newPage);
+  const handlePageChange = (event, newPage) => {
+    setCurrentPage(newPage - 1);
   };
 
   const handlePageSizeChange = (event) => {
     setPageSize(event.target.value);
     setCurrentPage(0);
   };
-  
+
   return (
     <Box m="20px">
-      <Header title="Findings" subtitle="Manage all the vulnerabilities in your Repository" />
+      <Header
+        title="Findings"
+        subtitle="Manage all the vulnerabilities in your Repository"
+      />
       <Box
         m="40px 0 0 0"
-        height="75vh"
         sx={{
           "& .MuiDataGrid-root": {
             border: "none",
@@ -112,12 +121,32 @@ const Team = () => {
           "& .MuiCheckbox-root": {
             color: `${colors.greenAccent[200]} !important`,
           },
+          "& .MuiFormControl-root": {
+            color: theme.palette.mode === "light" ? "white" : "black",
+          },
+          "& .MuiInputBase-root": {
+            color: theme.palette.mode === "light" ? "white" : "black",
+            backgroundColor: theme.palette.mode === "light" ? "black" : "white",
+          },
+          "& .MuiMenuItem-root": {
+            color: theme.palette.mode === "light" ? "black" : "white",
+            backgroundColor: theme.palette.mode === "light" ? "white" : "black",
+          },
+          "& .MuiButton-root": {
+            color: theme.palette.mode === "light" ? "white" : "black",
+            backgroundColor: theme.palette.mode === "light" ? "black" : "white",
+          },
+          "& .MuiListItemIcon-root": {
+            color: theme.palette.mode === "light" ? "white" : "black",
+          },
         }}
       >
         <Box display="flex" justifyContent="space-between" mb={2}>
           <Box display="flex">
             <FormControl sx={{ m: 1, minWidth: 120 }}>
-              <InputLabel>Tool</InputLabel>
+              <InputLabel sx={{ color: theme.palette.mode === "light" ? "white" : "black" }}>
+                Tool
+              </InputLabel>
               <Select
                 value={tool}
                 onChange={handleToolChange}
@@ -134,7 +163,9 @@ const Team = () => {
               </Select>
             </FormControl>
             <FormControl sx={{ m: 1, minWidth: 120 }}>
-              <InputLabel>Severity</InputLabel>
+              <InputLabel sx={{ color: theme.palette.mode === "light" ? "white" : "black" }}>
+                Severity
+              </InputLabel>
               <Select
                 value={severity}
                 onChange={handleSeverityChange}
@@ -153,7 +184,9 @@ const Team = () => {
               </Select>
             </FormControl>
             <FormControl sx={{ m: 1, minWidth: 120 }}>
-              <InputLabel>Status</InputLabel>
+              <InputLabel sx={{ color: theme.palette.mode === "light" ? "white" : "black" }}>
+                Status
+              </InputLabel>
               <Select
                 value={status}
                 onChange={handleStatusChange}
@@ -164,72 +197,78 @@ const Team = () => {
                 sx={{ backgroundColor: "white" }}
               >
                 <MenuItem value="">All</MenuItem>
-                <MenuItem value="Mitigated">Mitigated</MenuItem>
+                <MenuItem value="mitigated">Mitigated</MenuItem>
                 <MenuItem value="open">Open</MenuItem>
               </Select>
             </FormControl>
-              <FormControl sx={{ m: 1, minWidth: 120 }}>
-                <InputLabel>Rows per page</InputLabel>
-                <Select
-                  value={pageSize}
-                  onChange={handlePageSizeChange}
-                  labelId="rows-per-page-label"
-                  id="rows-per-page-select"
-                  label="Rows per page"
-                  sx={{ backgroundColor: "white" }}
-                >
-                  <MenuItem value={100}>All</MenuItem>
-                  <MenuItem value={5}>5</MenuItem>
-                  <MenuItem value={10}>10</MenuItem>
-                  <MenuItem value={20}>20</MenuItem>
-                  <MenuItem value={50}>50</MenuItem>
-                </Select>
+            <FormControl sx={{ m: 1, minWidth: 120 }}>
+              <InputLabel sx={{ color: theme.palette.mode === "light" ? "white" : "black" }}>
+                Rows per page
+              </InputLabel>
+              <Select
+                value={pageSize}
+                onChange={handlePageSizeChange}
+                labelId="rows-per-page-label"
+                id="rows-per-page-select"
+                label="Rows per page"
+                sx={{ backgroundColor: "white" }}
+              >
+                <MenuItem value={100}>All</MenuItem>
+                <MenuItem value={5}>5</MenuItem>
+                <MenuItem value={10}>10</MenuItem>
+                <MenuItem value={20}>20</MenuItem>
+                <MenuItem value={50}>50</MenuItem>
+              </Select>
             </FormControl>
           </Box>
           <Button onClick={handleScanNowClick} variant="contained" color="primary">
-            {loading ? <CircularProgress size={24} color="inherit" /> : 'Scan Now'}
-        </Button>
+            {loading ? <CircularProgress size={24} color="inherit" /> : "Scan Now"}
+          </Button>
         </Box>
-          {findings !== undefined && (
-          <DataGrid
-          checkboxSelection
-          rows={findings}
-          columns={columns}
-          pagination
-          pageSize={pageSize}
-          rowCount={totalPages * pageSize} // Total number of rows for pagination
-          onPageChange={handlePageChange} // Handler for page change
-          paginationMode="server" // Specify server-side pagination mode
-          page={currentPage} // Current page
-          onPageNavigation={(direction) => {
-            // Handle page navigation when "<" or ">" is clicked
-            if (direction === 'back') {
-              setCurrentPage(currentPage - 1);
-            } else if (direction === 'forward') {
-              setCurrentPage(currentPage + 1);
-            }
-          }}
-          components={{
-            pagination: (props) => (
-              <Box display="flex" justifyContent="center" alignItems="center">
-                <Typography>Go to Page:</Typography>
-                <FormControl sx={{ marginLeft: 1 }}>
-                  <Select
-                    value={currentPage + 1}
-                    onChange={(e) => setCurrentPage(e.target.value - 1)}
-                  >
-                    {[...Array(totalPages)].map((_, index) => (
-                      <MenuItem key={index} value={index + 1}>
-                        {index + 1}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Box>
-            ),
+        <TableContainer component={Paper} sx={{ overflowX: "auto" }}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell><h2>Finding ID</h2></TableCell>
+                <TableCell><h2>Severity</h2></TableCell>
+                <TableCell><h2>Status</h2>Status</TableCell>
+                <TableCell><h2>Summary</h2></TableCell>
+                <TableCell><h2>Tool</h2></TableCell>
+                <TableCell><h2>CVE ID</h2></TableCell>
+                <TableCell><h2>Path</h2></TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {findings.map((finding) => (
+                <TableRow key={finding.id}>
+                  <TableCell>{finding.id}</TableCell>
+                  <TableCell className={finding.security_severity_Level}>
+                    {finding.security_severity_Level}
+                  </TableCell>
+                  <TableCell>{finding.status}</TableCell>
+                  <TableCell>{finding.summary}</TableCell>
+                  <TableCell>{finding.tool}</TableCell>
+                  <TableCell>{finding.cve_id}</TableCell>
+                  <TableCell>{finding.pathIssue}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+        <Pagination
+          count={totalPages}
+          page={currentPage + 1}
+          onChange={handlePageChange}
+          shape="rounded"
+          color="primary"
+          size="large"
+          sx={{
+            "& .Mui-selected": {
+              backgroundColor: colors.primary[400], // Apply background color to the selected page
+              color: colors.grey[100], // Change text color of the selected page
+            },
           }}
         />
-            )}
       </Box>
     </Box>
   );

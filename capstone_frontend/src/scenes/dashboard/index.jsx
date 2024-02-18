@@ -1,21 +1,107 @@
 import { Box, Button, IconButton, Typography, useTheme } from "@mui/material";
 import { tokens } from "../../theme";
-import { mockTransactions } from "../../data/mockData";
 import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
-import EmailIcon from "@mui/icons-material/Email";
+import ReceiptOutlinedIcon from "@mui/icons-material/Email";
 import PointOfSaleIcon from "@mui/icons-material/PointOfSale";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import TrafficIcon from "@mui/icons-material/Traffic";
 import Header from "../../components/Header";
-import LineChart from "../../components/LineChart";
-import GeographyChart from "../../components/GeographyChart";
-import BarChart from "../../components/BarChart";
+import BarChartSeverity from "../../components/BarChartSeverity";
+import BarChartTool from "../../components/BarChartTool";
 import StatBox from "../../components/StatBox";
 import ProgressCircle from "../../components/ProgressCircle";
+import { useState, useEffect } from "react";
+import ProgressCircleStatus from "../../components/ProgressCircleStatus";
 
 const Dashboard = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
+  const [findings, setFindings] = useState([]);
+  const [codeQLfindings, setCodeQLfindings] = useState([]);
+  const [dependabotFindings, setDependabotFindings] = useState([]);
+  const [secretScanningFindings, setSecretScanningFindings] = useState([]);
+
+  const [totalElements, setTotalElements] = useState(0);
+  const [totalElementsCodeQL, setTotalElementsCodeQL] = useState(0);
+  const [totalElementsDependabot, setTotalElementsDependabot] = useState(0);
+  const [totalElementsSecretScanning, setTotalElementsSecretScanning] =
+    useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetchFindings();
+    fetchCodeQLFindings();
+    fetchDependabotFindings();
+    fetchSecretScanningFindings();
+  }, []);
+
+  const fetchFindings = async () => {
+    try {
+      // console.log(findings.content);
+      const response = await fetch("http://localhost:8090/allFindings");
+      if (!response.ok) {
+        throw new Error("Failed to fetch findings");
+      }
+      const data = await response.json();
+      setFindings(data);
+      setTotalElements(data.numberOfElements);
+      setLoading(false);
+    } catch (error) {
+      setError(error);
+      setLoading(false);
+    }
+  };
+
+  const fetchCodeQLFindings = async () => {
+    try {
+      const response = await fetch("http://localhost:8090/codeQLFindings");
+      if (!response.ok) {
+        throw new Error("Failed to fetch findings");
+      }
+      const data = await response.json();
+      setCodeQLfindings(data);
+      setTotalElementsCodeQL(data.numberOfElements);
+      setLoading(false);
+    } catch (error) {
+      setError(error);
+      setLoading(false);
+    }
+  };
+
+  const fetchDependabotFindings = async () => {
+    try {
+      const response = await fetch("http://localhost:8090/dependabotFindings");
+      if (!response.ok) {
+        throw new Error("Failed to fetch findings");
+      }
+      const data = await response.json();
+      setDependabotFindings(data);
+      setTotalElementsDependabot(data.numberOfElements);
+      setLoading(false);
+    } catch (error) {
+      setError(error);
+      setLoading(false);
+    }
+  };
+
+  const fetchSecretScanningFindings = async () => {
+    try {
+      const response = await fetch(
+        "http://localhost:8090/secretScanningFindings"
+      );
+      if (!response.ok) {
+        throw new Error("Failed to fetch findings");
+      }
+      const data = await response.json();
+      setSecretScanningFindings(data);
+      setTotalElementsSecretScanning(data.numberOfElements);
+      setLoading(false);
+    } catch (error) {
+      setError(error);
+      setLoading(false);
+    }
+  };
 
   return (
     <Box m="20px">
@@ -55,12 +141,12 @@ const Dashboard = () => {
           justifyContent="center"
         >
           <StatBox
-            title="12,361"
-            subtitle="Emails Sent"
-            progress="0.75"
-            increase="+14%"
+            title={totalElements}
+            subtitle="Total Findings"
+            progress="1"
+            increase="100%"
             icon={
-              <EmailIcon
+              <ReceiptOutlinedIcon
                 sx={{ color: colors.greenAccent[600], fontSize: "26px" }}
               />
             }
@@ -74,10 +160,10 @@ const Dashboard = () => {
           justifyContent="center"
         >
           <StatBox
-            title="431,225"
-            subtitle="Sales Obtained"
-            progress="0.50"
-            increase="+21%"
+            title={totalElementsCodeQL}
+            subtitle="CodeQL Findings"
+            progress={totalElementsCodeQL / totalElements}
+            increase={(totalElementsCodeQL / totalElements) * 100 + "%"}
             icon={
               <PointOfSaleIcon
                 sx={{ color: colors.greenAccent[600], fontSize: "26px" }}
@@ -93,10 +179,10 @@ const Dashboard = () => {
           justifyContent="center"
         >
           <StatBox
-            title="32,441"
-            subtitle="New Clients"
-            progress="0.30"
-            increase="+5%"
+            title={totalElementsDependabot}
+            subtitle="Dependabot Findings"
+            progress={totalElementsDependabot / totalElements}
+            increase={(totalElementsDependabot / totalElements) * 100 + "%"}
             icon={
               <PersonAddIcon
                 sx={{ color: colors.greenAccent[600], fontSize: "26px" }}
@@ -112,10 +198,10 @@ const Dashboard = () => {
           justifyContent="center"
         >
           <StatBox
-            title="1,325,134"
-            subtitle="Traffic Received"
-            progress="0.80"
-            increase="+43%"
+            title={totalElementsSecretScanning}
+            subtitle="Secret Scan Findings"
+            progress={totalElementsSecretScanning / totalElements}
+            increase={(totalElementsSecretScanning / totalElements) * 100 + "%"}
             icon={
               <TrafficIcon
                 sx={{ color: colors.greenAccent[600], fontSize: "26px" }}
@@ -124,123 +210,84 @@ const Dashboard = () => {
           />
         </Box>
 
-        {/* ROW 2 */}
-        <Box
-          gridColumn="span 8"
-          gridRow="span 2"
-          backgroundColor={colors.primary[400]}
-        >
-          <Box
-            mt="25px"
-            p="0 30px"
-            display="flex "
-            justifyContent="space-between"
-            alignItems="center"
-          >
-            <Box>
-              <Typography
-                variant="h5"
-                fontWeight="600"
-                color={colors.grey[100]}
-              >
-                Revenue Generated
-              </Typography>
-              <Typography
-                variant="h3"
-                fontWeight="bold"
-                color={colors.greenAccent[500]}
-              >
-                $59,342.32
-              </Typography>
-            </Box>
-            <Box>
-              <IconButton>
-                <DownloadOutlinedIcon
-                  sx={{ fontSize: "26px", color: colors.greenAccent[500] }}
-                />
-              </IconButton>
-            </Box>
-          </Box>
-          <Box height="250px" m="-20px 0 0 0">
-            <LineChart isDashboard={true} />
-          </Box>
-        </Box>
-        <Box
-          gridColumn="span 4"
-          gridRow="span 2"
-          backgroundColor={colors.primary[400]}
-          overflow="auto"
-        >
-          <Box
-            display="flex"
-            justifyContent="space-between"
-            alignItems="center"
-            borderBottom={`4px solid ${colors.primary[500]}`}
-            colors={colors.grey[100]}
-            p="15px"
-          >
-            <Typography color={colors.grey[100]} variant="h5" fontWeight="600">
-              Recent Transactions
-            </Typography>
-          </Box>
-          {mockTransactions.map((transaction, i) => (
-            <Box
-              key={`${transaction.txId}-${i}`}
-              display="flex"
-              justifyContent="space-between"
-              alignItems="center"
-              borderBottom={`4px solid ${colors.primary[500]}`}
-              p="15px"
-            >
-              <Box>
-                <Typography
-                  color={colors.greenAccent[500]}
-                  variant="h5"
-                  fontWeight="600"
-                >
-                  {transaction.txId}
-                </Typography>
-                <Typography color={colors.grey[100]}>
-                  {transaction.user}
-                </Typography>
-              </Box>
-              <Box color={colors.grey[100]}>{transaction.date}</Box>
-              <Box
-                backgroundColor={colors.greenAccent[500]}
-                p="5px 10px"
-                borderRadius="4px"
-              >
-                ${transaction.cost}
-              </Box>
-            </Box>
-          ))}
-        </Box>
-
         {/* ROW 3 */}
+        {findings && findings.content && (
+          <Box
+            gridColumn="span 4"
+            gridRow="span 2"
+            backgroundColor={colors.primary[400]}
+            p="30px"
+          >
+            <Typography variant="h5" fontWeight="600">
+              Findings by Status
+            </Typography>
+            <Box
+              display="flex"
+              alignItems="center"
+              justifyContent="space-between" // Add space between ProgressCircle components
+              mt="25px"
+            >
+              {/* ProgressCircle for "open" status */}
+              <Box>
+                <ProgressCircleStatus
+                  size={130}
+                  status="open"
+                  findings={findings.content}
+                />
+                <Typography
+                  variant="subtitle1"
+                  fontWeight="600"
+                  sx={{ mt: "10px" }}
+                >
+                  Open:{" "}
+                  {
+                    findings.content.filter((item) => item.status === "open")
+                      .length
+                  }{" "}
+                  / {findings.content.length}
+                </Typography>
+              </Box>
+              {/* Add some space between the ProgressCircle components */}
+              <Box mx={2} />
+              {/* ProgressCircle for "mitigated" status */}
+              <Box>
+                <ProgressCircleStatus
+                  size={130}
+                  status="mitigated"
+                  findings={findings.content}
+                />
+                <Typography
+                  variant="subtitle1"
+                  fontWeight="600"
+                  sx={{ mt: "10px" }}
+                >
+                  Mitigated:{" "}
+                  {
+                    findings.content.filter(
+                      (item) => item.status === "mitigated"
+                    ).length
+                  }{" "}
+                  / {findings.content.length}
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+        )}
+
         <Box
           gridColumn="span 4"
           gridRow="span 2"
           backgroundColor={colors.primary[400]}
-          p="30px"
         >
-          <Typography variant="h5" fontWeight="600">
-            Campaign
-          </Typography>
-          <Box
-            display="flex"
-            flexDirection="column"
-            alignItems="center"
-            mt="25px"
+          <Typography
+            variant="h5"
+            fontWeight="600"
+            sx={{ padding: "30px 30px 0 30px" }}
           >
-            <ProgressCircle size="125" />
-            <Typography
-              variant="h5"
-              color={colors.greenAccent[500]}
-              sx={{ mt: "15px" }}
-            >
-              $48,352 revenue generated
-            </Typography>
-            <Typography>Includes extra misc expenditures and costs</Typography>
+            Findings by severity
+          </Typography>
+          <Box height="250px" mt="-20px">
+            <BarChartSeverity findings={findings.content} isDashboard={true} />
           </Box>
         </Box>
         <Box
@@ -253,27 +300,10 @@ const Dashboard = () => {
             fontWeight="600"
             sx={{ padding: "30px 30px 0 30px" }}
           >
-            Sales Quantity
+            Findings by Tool
           </Typography>
           <Box height="250px" mt="-20px">
-            <BarChart isDashboard={true} />
-          </Box>
-        </Box>
-        <Box
-          gridColumn="span 4"
-          gridRow="span 2"
-          backgroundColor={colors.primary[400]}
-          padding="30px"
-        >
-          <Typography
-            variant="h5"
-            fontWeight="600"
-            sx={{ marginBottom: "15px" }}
-          >
-            Geography Based Traffic
-          </Typography>
-          <Box height="200px">
-            <GeographyChart isDashboard={true} />
+            <BarChartTool findings={findings.content} isDashboard={true} />
           </Box>
         </Box>
       </Box>
