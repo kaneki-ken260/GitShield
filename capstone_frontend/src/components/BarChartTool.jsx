@@ -27,6 +27,15 @@ const BarChartTool = ({ findings, isDashboard = false }) => {
     }, {})
   );
 
+  // Custom tooltip component to display count on hover
+  const CustomTooltip = ({ id, value, indexValue }) => (
+    <div style={{ background: "#fff", padding: "10px", border: "1px solid #ccc" }}>
+      <p>{id}</p>
+      <p>Count: {value}</p>
+      <p>Severity level: {indexValue}</p>
+    </div>
+  );
+
   return (
     <ResponsiveBar
       data={groupedData}
@@ -86,6 +95,7 @@ const BarChartTool = ({ findings, isDashboard = false }) => {
       labelSkipWidth={12}
       labelSkipHeight={12}
       labelTextColor={labelTextColor} // Set label text color based on theme mode
+      tooltip={CustomTooltip} // Use custom tooltip component
       legends={[
         {
           dataFrom: "keys",

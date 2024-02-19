@@ -29,10 +29,11 @@ const Team = () => {
   const [tool, setTool] = useState("");
   const [severity, setSeverity] = useState("");
   const [status, setStatus] = useState("");
-  const [pageSize, setPageSize] = useState(16); // Default page size
+  const [pageSize, setPageSize] = useState(20); // Default page size
   const [totalPages, setTotalPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [toolSeverityChange, setToolSeverityChange] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -63,9 +64,21 @@ const Team = () => {
     setStatus(event.target.value);
   };
 
-  useEffect(() => {
-    fetchData();
-  }, [currentPage, pageSize, severity, tool, status]);
+useEffect(() => {
+  fetchData();
+}, [currentPage, pageSize, tool, severity, status]);
+
+useEffect(() => {
+  setToolSeverityChange(true); // Set the flag to true when tool or severity changes
+}, [tool, severity]);
+
+useEffect(() => {
+  if (toolSeverityChange) {
+    setCurrentPage(0); // Reset currentPage to 0 only if tool or severity changes
+    setToolSeverityChange(false); // Reset the flag
+  }
+}, [toolSeverityChange]);
+
 
   const handleScanNowClick = async () => {
     try {
@@ -231,7 +244,7 @@ const Team = () => {
               <TableRow>
                 <TableCell><h2>Finding ID</h2></TableCell>
                 <TableCell><h2>Severity</h2></TableCell>
-                <TableCell><h2>Status</h2>Status</TableCell>
+                <TableCell><h2>Status</h2></TableCell>
                 <TableCell><h2>Summary</h2></TableCell>
                 <TableCell><h2>Tool</h2></TableCell>
                 <TableCell><h2>CVE ID</h2></TableCell>
