@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.elasticsearch.client.elc.ElasticsearchTemplate;
 import org.springframework.stereotype.Service;
 import java.util.ArrayList;
@@ -56,6 +57,7 @@ public class FindingService {
 //    }
 
     public Page<Findings> getAllFindings(Pageable pageable){
+
         return findingRepository.findAll(pageable);
     }
 
@@ -176,7 +178,8 @@ public class FindingService {
         }
 
         // Filtering the queries.
-        return findingRepository.findAll();
+        Sort sort = Sort.by(Sort.Direction.DESC, "updatedAt");
+        return findingRepository.findAll(sort);
         }
 
         public String getMappingForSeverity(String severity){

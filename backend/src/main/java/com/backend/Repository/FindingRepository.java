@@ -3,8 +3,11 @@ package com.backend.Repository;
 import com.backend.Entity.Findings;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
 
 @Repository
 public interface FindingRepository extends ElasticsearchRepository<Findings, Long> {
@@ -22,4 +25,6 @@ public interface FindingRepository extends ElasticsearchRepository<Findings, Lon
     Page<Findings> findByToolAndStatus(String tool, String status, Pageable pageable);
 
     Page<Findings> findBySeverityAndToolAndStatus(String severity, String tool,  String status, Pageable pageable);
+
+//    Page<Findings> findAll(Pageable pageable);
 }

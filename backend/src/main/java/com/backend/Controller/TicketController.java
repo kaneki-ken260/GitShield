@@ -6,6 +6,10 @@ import com.backend.Service.TicketService;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -30,7 +34,17 @@ public class TicketController {
     }
 
     @GetMapping("/fetchTickets")
-    public List<Tickets> fecthAllTickets(){
-        return ticketRepository.findAll();
+    public Page<Tickets> fecthAllTickets(@RequestParam(defaultValue = "0") int page,
+                                         @RequestParam(defaultValue = "20") int size,
+                                         @RequestParam(required = false) String priority){
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "updatedAt"));
+
+        if(priority!=null){
+            if(priority.isEmpty() || priority.equals("All")) return ticketRepository.findAll(pageable);
+            return ticketRepository.findByPriority(priority, pageable);
+        }
+
+        return ticketRepository.findAll(pageable);
     }
 }

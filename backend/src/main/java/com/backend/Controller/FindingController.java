@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -40,7 +41,7 @@ public class FindingController {
                                         @RequestParam(required = false) String severity,
                                         @RequestParam(required = false) String tool){
 
-        Pageable pageable = PageRequest.of(page, size);
+        PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "updatedAt"));
 
         if (severity != null && tool != null) {
             if (severity.isEmpty() && tool.isEmpty()) {
@@ -73,7 +74,7 @@ public class FindingController {
 
 
         // Create pageable object with provided page number, size, and sorting (if needed)
-        Pageable pageable = PageRequest.of(currentPage, pageSize);
+        Pageable pageable = PageRequest.of(currentPage, pageSize,Sort.by(Sort.Direction.DESC, "updatedAt"));
 
         return findingService.getAllFindings(pageable);
 
@@ -88,7 +89,7 @@ public class FindingController {
 
 
         // Create pageable object with provided page number, size, and sorting (if needed)
-        Pageable pageable = PageRequest.of(currentPage, pageSize);
+        Pageable pageable = PageRequest.of(currentPage, pageSize, Sort.by(Sort.Direction.DESC, "updatedAt"));
 
         return findingService.getFindingsForTool(tool, pageable);
 
@@ -103,7 +104,7 @@ public class FindingController {
 
 
         // Create pageable object with provided page number, size, and sorting (if needed)
-        Pageable pageable = PageRequest.of(currentPage, pageSize);
+        Pageable pageable = PageRequest.of(currentPage, pageSize, Sort.by(Sort.Direction.DESC, "updatedAt"));
 
         return findingService.getFindingsForTool(tool, pageable);
 
@@ -118,7 +119,7 @@ public class FindingController {
 
 
         // Create pageable object with provided page number, size, and sorting (if needed)
-        Pageable pageable = PageRequest.of(currentPage, pageSize);
+        Pageable pageable = PageRequest.of(currentPage, pageSize, Sort.by(Sort.Direction.DESC, "updatedAt"));
 
         return findingService.getFindingsForTool(tool, pageable);
 
