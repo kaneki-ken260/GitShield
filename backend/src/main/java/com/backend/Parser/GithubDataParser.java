@@ -58,7 +58,6 @@ public class GithubDataParser {
             simplifiedNode.put("endColumn", extractEndColumn(node,tool));
             simplifiedNode.put("startLine", extractStartLine(node,tool));
             simplifiedNode.put("endLine", extractEndLine(node,tool));
-//            simplifiedNode.put("ecosystem", extractEcoSystem(node,tool));
             simplifiedNode.put("secretType", extractSecretType(node,tool));
             simplifiedNode.put("secret", extractSecret(node,tool));
             simplifiedNode.put("createdAt", extractCreatedAt(node,tool));

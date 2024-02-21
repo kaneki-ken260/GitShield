@@ -1,5 +1,7 @@
 package com.backend.Kafka;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
@@ -12,8 +14,16 @@ public class KafkaProducerService {
     @Autowired
     private KafkaTemplate<String, String> kafkaTemplate;
 
-    public void sendMessage(String message) {
-        kafkaTemplate.send(TOPIC_NAME, message);
+    public void sendMessage(JsonNode finding) {
+        try {
+            // Convert JsonNode to String
+            String findingString = new ObjectMapper().writeValueAsString(finding);
+            // Send the message
+            kafkaTemplate.send(TOPIC_NAME, findingString);
+        } catch (Exception e) {
+            // Handle serialization exception
+            e.printStackTrace();
+        }
     }
 }
 

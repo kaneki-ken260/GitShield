@@ -2,10 +2,12 @@ package com.backend.Service;
 
 import com.backend.Entity.Findings;
 //import com.backend.Kafka.KafkaProducerService;
+import com.backend.Kafka.KafkaProducerService;
 import com.backend.Parser.GithubDataParser;
 import com.backend.Repository.FindingRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -37,8 +39,8 @@ public class FindingService {
     @Autowired
     private FindingRepository findingRepository;
 
-//    @Autowired
-//    private KafkaProducerService kafkaProducerService;
+    @Autowired
+    private KafkaProducerService kafkaProducerService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -131,22 +133,45 @@ public class FindingService {
         for (JsonNode findingFromGithub: findingsList){
             String currHash = hashService.generateHashValue(findingFromGithub);
 //            System.out.println(currHash);
+
+//            JsonNode findingForConsumer = findingFromGithub;
+
+//            System.out.println(findingFromGithub.get("status").asText() + " Before conversion for github");
+
+            String stateInFindingFromGithub = findingFromGithub.get("status").asText();
+
             if(hashtable.containsKey(currHash))
             {
                 String stateInELasticSearch = hashtable.get(currHash).getStatus();
-                String stateInFindingFromGithub = findingFromGithub.get("status").asText();
-
                 if(!stateInELasticSearch.equals(stateInFindingFromGithub)) //State has changed
                 {
-                    findingRepository.deleteById(hashtable.get(currHash).getId());
+
+                    Long esId = hashtable.get(currHash).getId();
+                    // As the state has changed so we will have to update the status of ticket
+
+                    //Mapping the status field as of Armorcode
+
+                    ((ObjectNode) findingFromGithub).put("status", getMappingForStatus(stateInFindingFromGithub));
+                    ((ObjectNode) findingFromGithub).put("change", "state change");
+                    ((ObjectNode) findingFromGithub).put("id", esId);
+                    kafkaProducerService.sendMessage(findingFromGithub);
+
+//                    findingRepository.deleteById(hashtable.get(currHash).getId());
                     saveJsonNode(findingFromGithub);
                 }
             }
 
-            else
+            else if(stateInFindingFromGithub.equals("open"))
             {
-                saveJsonNode(findingFromGithub);
+                // As a new issue is found so We have to create A Jira Ticket
+                ((ObjectNode) findingFromGithub).put("change", "new issue");
+
+                //Mapping the status field as of Armorcode
+                ((ObjectNode) findingFromGithub).put("status", getMappingForStatus(findingFromGithub.get("status").asText()));
+                kafkaProducerService.sendMessage(findingFromGithub);
+
                 hashtable.put(currHash,convertJsonNodeToFindings(findingFromGithub));
+                saveJsonNode(findingFromGithub);
             }
         }
 
@@ -167,9 +192,8 @@ public class FindingService {
 
         public String getMappingForStatus(String status){
             return switch (status) {
-                case "open" -> "open";
-                case "fixed", "dismissed" -> "mitigated";
-                default -> "False Positive";
+                case "fixed", "dismissed", "mitigated", "resolved" -> "mitigated";
+                default -> "open";
             };
         }
 
@@ -226,23 +250,6 @@ public class FindingService {
         findingRepository.save(finding);
     }
 
-    // Basically to handle the filters from the frontend part
-    private boolean findingMatchesCriteria(Findings finding,
-                                           String selectedTool,
-                                           String selectedSeverity,
-                                           String selectedStatus) {
-        // Tool filter
-        boolean toolMatches = selectedTool == null || selectedTool.isEmpty() || finding.getTool().equalsIgnoreCase(selectedTool);
-
-        // Severity filter
-        boolean severityMatches = selectedSeverity == null || selectedSeverity.isEmpty() || finding.getSeverity().equalsIgnoreCase(selectedSeverity);
-
-        // Status filter
-        boolean statusMatches = selectedStatus == null || selectedStatus.isEmpty() || finding.getStatus().equalsIgnoreCase(selectedStatus);
-
-        // Return true if all criteria match
-        return toolMatches && severityMatches && statusMatches;
-    }
     public void deleteAllFindings() {
         findingRepository.deleteAll();
     }

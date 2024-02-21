@@ -1,13 +1,15 @@
 package com.backend;
 
+import org.junit.Test;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
-class CapStoneApplicationTests {
+@SpringBootApplication
+public class CapStoneApplicationTests {
 
 	@Test
-	void contextLoads() {
+    public void contextLoads() {
 	}
 
 }
