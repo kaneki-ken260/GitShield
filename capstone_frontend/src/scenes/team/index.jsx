@@ -28,7 +28,6 @@ const Team = () => {
   const [error, setError] = useState(null);
   const [tool, setTool] = useState("");
   const [severity, setSeverity] = useState("");
-  const [status, setStatus] = useState("");
   const [pageSize, setPageSize] = useState(20); // Default page size
   const [totalPages, setTotalPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(0);
@@ -38,16 +37,11 @@ const Team = () => {
   const fetchData = async () => {
     try {
       const response = await fetch(
-        `http://localhost:8090/fetchFindings?page=${currentPage}&size=${pageSize}&severity=${severity}&tool=${tool}&status=${status}`
+        `http://localhost:8090/fetchFindings?page=${currentPage}&size=${pageSize}&severity=${severity}&tool=${tool}`
       );
       const jsonResponse = await response.json();
 
-      // Sort the findings based on updatedAt field in decreasing order
-    const sortedFindings = jsonResponse.content.sort((a, b) => {
-      return new Date(b.updatedAt) - new Date(a.updatedAt);
-    });
-
-      setFindings(sortedFindings);
+      setFindings(jsonResponse.content);
       setTotalPages(jsonResponse.totalPages);
       setLoading(true);
     } catch (error) {
@@ -66,13 +60,9 @@ const Team = () => {
     setSeverity(event.target.value);
   };
 
-  const handleStatusChange = (event) => {
-    setStatus(event.target.value);
-  };
-
 useEffect(() => {
   fetchData();
-}, [currentPage, pageSize, tool, severity, status]);
+}, [currentPage, pageSize, tool, severity]);
 
 useEffect(() => {
   setToolSeverityChange(true); // Set the flag to true when tool or severity changes
@@ -244,24 +234,6 @@ const getTimeDifferenceString = (updatedAt) => {
                 <MenuItem value="medium">Medium</MenuItem>
                 <MenuItem value="low">Low</MenuItem>
                 <MenuItem value="info">Info</MenuItem>
-              </Select>
-            </FormControl>
-            <FormControl sx={{ m: 1, minWidth: 120 }}>
-              <InputLabel sx={{ color: theme.palette.mode === "light" ? "white" : "black" }}>
-                Status
-              </InputLabel>
-              <Select
-                value={status}
-                onChange={handleStatusChange}
-                labelId="status-label"
-                id="status-select"
-                defaultValue=""
-                label="Status"
-                sx={{ backgroundColor: "white" }}
-              >
-                <MenuItem value="">All</MenuItem>
-                <MenuItem value="mitigated">Mitigated</MenuItem>
-                <MenuItem value="open">Open</MenuItem>
               </Select>
             </FormControl>
             <FormControl sx={{ m: 1, minWidth: 120 }}>

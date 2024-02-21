@@ -182,7 +182,7 @@ const Dashboard = () => {
             title={totalElementsCodeQL}
             subtitle="CodeQL Findings"
             progress={totalElementsCodeQL / totalElements}
-            increase={(totalElementsCodeQL / totalElements) * 100 + "%"}
+            increase={((totalElementsCodeQL / totalElements) * 100).toFixed(2) + "%"}
             icon={
               <PointOfSaleIcon
                 sx={{ color: colors.greenAccent[600], fontSize: "26px" }}
@@ -201,7 +201,7 @@ const Dashboard = () => {
             title={totalElementsDependabot}
             subtitle="Dependabot Findings"
             progress={totalElementsDependabot / totalElements}
-            increase={(totalElementsDependabot / totalElements) * 100 + "%"}
+            increase={((totalElementsDependabot / totalElements) * 100).toFixed(2) + "%"}
             icon={
               <PersonAddIcon
                 sx={{ color: colors.greenAccent[600], fontSize: "26px" }}
@@ -220,7 +220,7 @@ const Dashboard = () => {
             title={totalElementsSecretScanning}
             subtitle="Secret Scan Findings"
             progress={totalElementsSecretScanning / totalElements}
-            increase={(totalElementsSecretScanning / totalElements) * 100 + "%"}
+            increase={((totalElementsSecretScanning / totalElements) * 100).toFixed(2) + "%"}
             icon={
               <TrafficIcon
                 sx={{ color: colors.greenAccent[600], fontSize: "26px" }}

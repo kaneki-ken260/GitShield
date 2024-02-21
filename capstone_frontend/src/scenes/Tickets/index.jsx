@@ -26,30 +26,22 @@ const Tickets = () => {
   const colors = tokens(theme.palette.mode);
   const [tickets, setTickets] = useState([]);
   const [error, setError] = useState(null);
-  const [tool, setTool] = useState("");
-  const [severity, setSeverity] = useState("");
-  const [status, setStatus] = useState("");
+  const [priority, setPriority] = useState("");
   const [pageSize, setPageSize] = useState(20); // Default page size
   const [totalPages, setTotalPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [toolSeverityChange, setToolSeverityChange] = useState(false);
+  const [priorityChange, setPriorityChange] = useState(false);
 
   const fetchData = async () => {
     try {
       const response = await fetch(
-        `http://localhost:8090/fetchTickets`
+        `http://localhost:8090/fetchTickets?page=${currentPage}&size=${pageSize}&priority=${priority}`
       );
       const jsonResponse = await response.json();
-
-      // Sort the findings based on updatedAt field in decreasing order
-    const sortedTickets = jsonResponse.sort((a, b) => {
-      return new Date(b.updatedAt) - new Date(a.updatedAt);
-    });
-  
-
-      setTickets(sortedTickets);
-    //   setTotalPages(jsonResponse.totalPages);
+      console.log(jsonResponse.content);
+      setTickets(jsonResponse.content);
+      setTotalPages(jsonResponse.totalPages);
       setLoading(true);
     } catch (error) {
       setError(error);
@@ -59,32 +51,20 @@ const Tickets = () => {
     }
   };
 
-  const handleToolChange = (event) => {
-    setTool(event.target.value);
-  };
-
-  const handleSeverityChange = (event) => {
-    setSeverity(event.target.value);
-  };
-
-  const handleStatusChange = (event) => {
-    setStatus(event.target.value);
-  };
-
 useEffect(() => {
   fetchData();
-}, [currentPage, pageSize, tool, severity, status]);
+}, [currentPage, pageSize, priority]);
 
 useEffect(() => {
-  setToolSeverityChange(true); // Set the flag to true when tool or severity changes
-}, [tool, severity]);
+  setPriorityChange(true); // Set the flag to true when tool or severity changes
+}, [priority]);
 
 useEffect(() => {
-  if (toolSeverityChange) {
+  if (priorityChange) {
     setCurrentPage(0); // Reset currentPage to 0 only if tool or severity changes
-    setToolSeverityChange(false); // Reset the flag
+    setPriorityChange(false); // Reset the flag
   }
-}, [toolSeverityChange]);
+}, [priorityChange]);
 
 // To get the time difference
 const getTimeDifferenceString = (updatedAt) => {
@@ -129,20 +109,6 @@ const getSeverityColor = (severity) => {
   }
 };
 
-
-  const handleUpdateNowClick = async () => {
-    try {
-      setLoading(true);
-      await fetch("http://localhost:8090/fetch-and-save");
-      console.log("Update initiated successfully");
-      fetchData();
-    } catch (error) {
-      console.error("Error initiating scan:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handlePageChange = (event, newPage) => {
     setCurrentPage(newPage - 1);
   };
@@ -150,6 +116,10 @@ const getSeverityColor = (severity) => {
   const handlePageSizeChange = (event) => {
     setPageSize(event.target.value);
     setCurrentPage(0);
+  };
+
+  const handlePriorityChange = (event) => {
+    setPriority(event.target.value);
   };
 
   return (
@@ -206,64 +176,27 @@ const getSeverityColor = (severity) => {
       >
         <Box display="flex" justifyContent="space-between" mb={2}>
           <Box display="flex">
-            {/* <FormControl sx={{ m: 1, minWidth: 120 }}>
-              <InputLabel sx={{ color: theme.palette.mode === "light" ? "white" : "black" }}>
-                Tool
-              </InputLabel>
-              <Select
-                value={tool}
-                onChange={handleToolChange}
-                labelId="tool-label"
-                id="tool-select"
-                defaultValue=""
-                label="Tool"
-                sx={{ backgroundColor: "white" }}
-              >
-                <MenuItem value="">All</MenuItem>
-                <MenuItem value="CodeQL">CodeQL</MenuItem>
-                <MenuItem value="Secret Scan">Secret Scan</MenuItem>
-                <MenuItem value="Dependabot">Dependabot</MenuItem>
-              </Select>
-            </FormControl>
             <FormControl sx={{ m: 1, minWidth: 120 }}>
               <InputLabel sx={{ color: theme.palette.mode === "light" ? "white" : "black" }}>
-                Severity
+                Priority
               </InputLabel>
               <Select
-                value={severity}
-                onChange={handleSeverityChange}
-                labelId="severity-label"
-                id="severity-select"
+                value={priority}
+                onChange={handlePriorityChange}
+                labelId="priority-label"
+                id="priority-select"
                 defaultValue=""
-                label="Severity"
+                label="Priority"
                 sx={{ backgroundColor: "white" }}
               >
                 <MenuItem value="">All</MenuItem>
-                <MenuItem value="critical">Critical</MenuItem>
+                <MenuItem value="critical">Highest</MenuItem>
                 <MenuItem value="high">High</MenuItem>
                 <MenuItem value="medium">Medium</MenuItem>
                 <MenuItem value="low">Low</MenuItem>
-                <MenuItem value="info">Info</MenuItem>
+                <MenuItem value="info">Lowest</MenuItem>
               </Select>
             </FormControl>
-            <FormControl sx={{ m: 1, minWidth: 120 }}>
-              <InputLabel sx={{ color: theme.palette.mode === "light" ? "white" : "black" }}>
-                Status
-              </InputLabel>
-              <Select
-                value={status}
-                onChange={handleStatusChange}
-                labelId="status-label"
-                id="status-select"
-                defaultValue=""
-                label="Status"
-                sx={{ backgroundColor: "white" }}
-              >
-                <MenuItem value="">All</MenuItem>
-                <MenuItem value="mitigated">Mitigated</MenuItem>
-                <MenuItem value="open">Open</MenuItem>
-              </Select>
-            </FormControl> */}
             <FormControl sx={{ m: 1, minWidth: 120 }}>
               <InputLabel sx={{ color: theme.palette.mode === "light" ? "white" : "black" }}>
                 Rows per page
@@ -284,9 +217,6 @@ const getSeverityColor = (severity) => {
               </Select>
             </FormControl>
           </Box>
-          <Button onClick={handleUpdateNowClick} variant="contained" color="primary">
-            {loading ? <CircularProgress size={24} color="inherit" /> : "Update Now"}
-          </Button>
         </Box>
         <TableContainer component={Paper} sx={{ overflowX: "auto" }}>
           <Table>
