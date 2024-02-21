@@ -21,10 +21,10 @@ import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
 import Pagination from "@mui/material/Pagination";
 
-const Team = () => {
+const Tickets = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-  const [findings, setFindings] = useState([]);
+  const [tickets, setTickets] = useState([]);
   const [error, setError] = useState(null);
   const [tool, setTool] = useState("");
   const [severity, setSeverity] = useState("");
@@ -38,17 +38,18 @@ const Team = () => {
   const fetchData = async () => {
     try {
       const response = await fetch(
-        `http://localhost:8090/fetchFindings?page=${currentPage}&size=${pageSize}&severity=${severity}&tool=${tool}&status=${status}`
+        `http://localhost:8090/fetchTickets`
       );
       const jsonResponse = await response.json();
 
       // Sort the findings based on updatedAt field in decreasing order
-    const sortedFindings = jsonResponse.content.sort((a, b) => {
+    const sortedTickets = jsonResponse.sort((a, b) => {
       return new Date(b.updatedAt) - new Date(a.updatedAt);
     });
+  
 
-      setFindings(sortedFindings);
-      setTotalPages(jsonResponse.totalPages);
+      setTickets(sortedTickets);
+    //   setTotalPages(jsonResponse.totalPages);
       setLoading(true);
     } catch (error) {
       setError(error);
@@ -113,33 +114,32 @@ const getTimeDifferenceString = (updatedAt) => {
   return "Just now";
 };
 
+const getSeverityColor = (severity) => {
+  switch (severity) {
+    case 'Highest':
+      return colors.redAccent[500];
+    case 'High':
+      return colors.redAccent[700];
+    case 'Medium':
+      return colors.blueAccent[600];
+    case 'Low':
+      return colors.greenAccent[600];
+    default:
+      return colors.grey[500];
+  }
+};
 
 
-  const handleScanNowClick = async () => {
+  const handleUpdateNowClick = async () => {
     try {
       setLoading(true);
       await fetch("http://localhost:8090/fetch-and-save");
-      console.log("Scan initiated successfully");
+      console.log("Update initiated successfully");
       fetchData();
     } catch (error) {
       console.error("Error initiating scan:", error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const getSeverityColor = (severity) => {
-    switch (severity) {
-      case 'critical':
-        return colors.redAccent[500];
-      case 'high':
-        return colors.redAccent[700];
-      case 'medium':
-        return colors.blueAccent[600];
-      case 'low':
-        return colors.greenAccent[600];
-      default:
-        return colors.grey[500];
     }
   };
 
@@ -155,8 +155,8 @@ const getTimeDifferenceString = (updatedAt) => {
   return (
     <Box m="20px">
       <Header
-        title="Findings"
-        subtitle="Manage all the vulnerabilities in your Repository"
+        title="Tickets"
+        subtitle="Manage all the Jira Tickets"
       />
       <Box
         m="40px 0 0 0"
@@ -206,7 +206,7 @@ const getTimeDifferenceString = (updatedAt) => {
       >
         <Box display="flex" justifyContent="space-between" mb={2}>
           <Box display="flex">
-            <FormControl sx={{ m: 1, minWidth: 120 }}>
+            {/* <FormControl sx={{ m: 1, minWidth: 120 }}>
               <InputLabel sx={{ color: theme.palette.mode === "light" ? "white" : "black" }}>
                 Tool
               </InputLabel>
@@ -263,7 +263,7 @@ const getTimeDifferenceString = (updatedAt) => {
                 <MenuItem value="mitigated">Mitigated</MenuItem>
                 <MenuItem value="open">Open</MenuItem>
               </Select>
-            </FormControl>
+            </FormControl> */}
             <FormControl sx={{ m: 1, minWidth: 120 }}>
               <InputLabel sx={{ color: theme.palette.mode === "light" ? "white" : "black" }}>
                 Rows per page
@@ -284,39 +284,39 @@ const getTimeDifferenceString = (updatedAt) => {
               </Select>
             </FormControl>
           </Box>
-          <Button onClick={handleScanNowClick} variant="contained" color="primary">
-            {loading ? <CircularProgress size={24} color="inherit" /> : "Scan Now"}
+          <Button onClick={handleUpdateNowClick} variant="contained" color="primary">
+            {loading ? <CircularProgress size={24} color="inherit" /> : "Update Now"}
           </Button>
         </Box>
         <TableContainer component={Paper} sx={{ overflowX: "auto" }}>
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell><h2>Finding ID</h2></TableCell>
-                <TableCell><h2>Severity</h2></TableCell>
+                <TableCell><h2>Ticket ID</h2></TableCell>
+                <TableCell><h2>Priority</h2></TableCell>
+                <TableCell><h2>Scan Type</h2></TableCell>
                 <TableCell><h2>Status</h2></TableCell>
+                <TableCell><h2>Created By</h2></TableCell>
                 <TableCell><h2>Summary</h2></TableCell>
-                <TableCell><h2>Tool</h2></TableCell>
-                <TableCell><h2>CVE ID</h2></TableCell>
-                <TableCell><h2>Path</h2></TableCell>
+                <TableCell><h2>Issue Type</h2></TableCell>
                 <TableCell><h2>Updated</h2></TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {findings.map((finding) => (
-                <TableRow key={finding.id}>
-                  <TableCell>{finding.id}</TableCell>
+              {tickets && tickets.map((ticket) => (
+                <TableRow key={ticket.id}>
+                  <TableCell>{ticket.id}</TableCell>
                   <TableCell>
-                    <span style={{ backgroundColor: getSeverityColor(finding.security_severity_Level), color: '#fff', padding: '4px', borderRadius: '4px' }}>
-                      {finding.security_severity_Level || "null"}
+                    <span style={{ backgroundColor: getSeverityColor(ticket.priority), color: '#fff', padding: '4px', borderRadius: '4px' }}>
+                      {ticket.priority || "null"}
                     </span>
                   </TableCell>
-                  <TableCell>{finding.status}</TableCell>
-                  <TableCell>{finding.summary}</TableCell>
-                  <TableCell>{finding.tool}</TableCell>
-                  <TableCell>{finding.cve_id}</TableCell>
-                  <TableCell>{finding.pathIssue}</TableCell>
-                  <TableCell>{getTimeDifferenceString(finding.updatedAt)}</TableCell>
+                  <TableCell>{ticket.scanType}</TableCell>
+                  <TableCell>{ticket.status}</TableCell>
+                  <TableCell>{ticket.createdBy}</TableCell>
+                  <TableCell>{ticket.summary}</TableCell>
+                  <TableCell>{ticket.issueType}</TableCell>
+                  <TableCell>{getTimeDifferenceString(ticket.updatedAt)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -340,4 +340,4 @@ const getTimeDifferenceString = (updatedAt) => {
     </Box>
   );
 };
-export default Team;
+export default Tickets;

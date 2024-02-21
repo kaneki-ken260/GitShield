@@ -12,6 +12,7 @@ import StatBox from "../../components/StatBox";
 import ProgressCircle from "../../components/ProgressCircle";
 import { useState, useEffect } from "react";
 import ProgressCircleStatus from "../../components/ProgressCircleStatus";
+import BarChartTicketPriority from "../../components/BarChartTicketPriority";
 
 const Dashboard = () => {
   const theme = useTheme();
@@ -20,6 +21,7 @@ const Dashboard = () => {
   const [codeQLfindings, setCodeQLfindings] = useState([]);
   const [dependabotFindings, setDependabotFindings] = useState([]);
   const [secretScanningFindings, setSecretScanningFindings] = useState([]);
+  const [tickets, setTickets] = useState([]);
 
   const [totalElements, setTotalElements] = useState(0);
   const [totalElementsCodeQL, setTotalElementsCodeQL] = useState(0);
@@ -30,11 +32,28 @@ const Dashboard = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    fetchTickets();
     fetchFindings();
     fetchCodeQLFindings();
     fetchDependabotFindings();
     fetchSecretScanningFindings();
   }, []);
+
+  const fetchTickets = async () => {
+    try {
+      // console.log(findings.content);
+      const response = await fetch("http://localhost:8090/fetchTickets");
+      if (!response.ok) {
+        throw new Error("Failed to fetch Tickets");
+      }
+      const data = await response.json();
+      setTickets(data);
+      setLoading(false);
+    } catch (error) {
+      setError(error);
+      setLoading(false);
+    }
+  };
 
   const fetchFindings = async () => {
     try {
@@ -284,7 +303,7 @@ const Dashboard = () => {
             fontWeight="600"
             sx={{ padding: "30px 30px 0 30px" }}
           >
-            Findings by severity
+            Findings by Severity
           </Typography>
           <Box height="250px" mt="-20px">
             <BarChartSeverity findings={findings.content} isDashboard={true} />
@@ -306,6 +325,24 @@ const Dashboard = () => {
             <BarChartTool findings={findings.content} isDashboard={true} />
           </Box>
         </Box>
+
+        <Box
+          gridColumn="span 4"
+          gridRow="span 2"
+          backgroundColor={colors.primary[400]}
+        >
+          <Typography
+            variant="h5"
+            fontWeight="600"
+            sx={{ padding: "30px 30px 0 30px" }}
+          >
+            Tickets by Priority
+          </Typography>
+          <Box height="250px" mt="-20px">
+            <BarChartTicketPriority tickets={tickets} isDashboard={true} />
+          </Box>
+        </Box>
+
       </Box>
     </Box>
   );
