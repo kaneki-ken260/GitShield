@@ -239,17 +239,22 @@ public class TicketService {
         Tickets ticket = ticketRepository.findByFindingId(findingId);
         String ticketId = "";
 
+        long milliseconds = System.currentTimeMillis();
+        Instant instant = Instant.ofEpochMilli(milliseconds);
+
         if(ticket==null) return;
 
         ticketId = ticket.getId();
         if(findingStatus.equals("mitigated")){
               ticket.setStatus("Done");
+              ticket.setUpdatedAt(instant.atZone(ZoneId.systemDefault()).toLocalDateTime());
               ticketRepository.save(ticket);
               updateJiraTicketStatus(ticketId,"Done", workFlowOfJira);
         }
 
         else{
             ticket.setStatus("To Do");
+            ticket.setUpdatedAt(instant.atZone(ZoneId.systemDefault()).toLocalDateTime());
             ticketRepository.save(ticket);
             updateJiraTicketStatus(ticketId,"To Do", workFlowOfJira);
         }
