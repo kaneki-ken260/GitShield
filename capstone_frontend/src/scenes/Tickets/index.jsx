@@ -94,8 +94,8 @@ const getTimeDifferenceString = (updatedAt) => {
   return "Just now";
 };
 
-const getSeverityColor = (severity) => {
-  switch (severity) {
+const getPriorityColor = (priority) => {
+  switch (priority) {
     case 'Highest':
       return colors.redAccent[500];
     case 'High':
@@ -103,6 +103,17 @@ const getSeverityColor = (severity) => {
     case 'Medium':
       return colors.blueAccent[600];
     case 'Low':
+      return colors.greenAccent[600];
+    default:
+      return colors.grey[500];
+  }
+};
+
+const getStatusColor = (status) => {
+  switch (status) {
+    case 'To Do':
+      return colors.redAccent[700];
+    case 'Done':
       return colors.greenAccent[600];
     default:
       return colors.grey[500];
@@ -237,12 +248,16 @@ const getSeverityColor = (severity) => {
                 <TableRow key={ticket.id}>
                   <TableCell>{ticket.id}</TableCell>
                   <TableCell>
-                    <span style={{ backgroundColor: getSeverityColor(ticket.priority), color: '#fff', padding: '4px', borderRadius: '4px' }}>
+                    <span style={{ backgroundColor: getPriorityColor(ticket.priority), color: '#fff', padding: '4px', borderRadius: '4px' }}>
                       {ticket.priority || "null"}
                     </span>
                   </TableCell>
                   <TableCell>{ticket.scanType}</TableCell>
-                  <TableCell>{ticket.status}</TableCell>
+                  <TableCell>
+                    <span style={{ backgroundColor: getStatusColor(ticket.status), color: '#fff', padding: '4px', borderRadius: '4px' }}>
+                      {ticket.status || "null"}
+                    </span>
+                  </TableCell>
                   <TableCell>{ticket.createdBy}</TableCell>
                   <TableCell>{ticket.summary}</TableCell>
                   <TableCell>{ticket.issueType}</TableCell>

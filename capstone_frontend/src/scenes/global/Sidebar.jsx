@@ -35,7 +35,7 @@ const Item = ({ title, to, icon, selected, setSelected }) => {
   );
 };
 
-const Sidebar = () => {
+const Sidebar = ({ userRole }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -138,18 +138,20 @@ const Sidebar = () => {
             </Typography>
             <Item
               title="Findings"
-              to="/team"
+              to="/findings"
               icon={<ReceiptOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
             />
-            <Item
-              title="Jira Tickets"
-              to="/tickets"
-              icon={<TimelineOutlinedIcon />}
-              selected={selected}
-              setSelected={setSelected}
-            />
+            {userRole !== "employee" && (
+              <Item
+                title="Jira Tickets"
+                to="/tickets"
+                icon={<TimelineOutlinedIcon />}
+                selected={selected}
+                setSelected={setSelected}
+              />
+            )}
 
             <Typography
               variant="h6"
@@ -173,8 +175,8 @@ const Sidebar = () => {
               setSelected={setSelected}
             />
             <Item
-              title="FAQ Page"
-              to="/faq"
+              title="Log Out"
+              to="/logout"
               icon={<HelpOutlineOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}

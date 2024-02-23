@@ -21,7 +21,7 @@ import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
 import Pagination from "@mui/material/Pagination";
 
-const Team = () => {
+const Findings = ({ userRole }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const [findings, setFindings] = useState([]);
@@ -312,4 +312,4 @@ const getTimeDifferenceString = (updatedAt) => {
     </Box>
   );
 };
-export default Team;
+export default Findings;
