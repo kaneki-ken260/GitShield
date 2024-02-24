@@ -44,11 +44,14 @@ const LoginPage = ({ onLogin, assignRole }) => {
                 }
             );
             // Since the call was successful assign the role to the user from backend
-            const userRole = response.data;
+            // console.log(response);
+            const userRole = response.data.role;
+            const organizationId = response.data.orgId;
             assignRole(userRole);
 
             localStorage.setItem("sessionToken", credential)
             localStorage.setItem("userRole", userRole)
+            localStorage.setItem("orgId",organizationId);
 
             // console.log("Hello " + localStorage.getItem("sessionToken"))
             // console.log(localStorage.getItem("userRole"))

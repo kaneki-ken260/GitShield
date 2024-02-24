@@ -9,12 +9,15 @@ import Tickets from "./scenes/Tickets";
 import LoginPage from "./scenes/login";
 import Findings from "./scenes/findings";
 import LogOut from "./scenes/logout";
+import Scans from "./scenes/scans";
 
 function App() {
   const [theme, colorMode] = useMode();
   const [isSidebar, setIsSidebar] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [role, setRole] = useState("jksdfjd");
+  const [organizationId, setOrganizationId] = useState(localStorage.getItem("orgId"))
+  const [accessToken, setAccessToken] = useState(localStorage.getItem("sessionToken"));
 
 
   // Handling so that on refresh the user is routed to the same page.
@@ -38,7 +41,7 @@ function App() {
   }
 
   const redirectToDefault = () => {
-    console.log("Ritwik")
+    // console.log("Ritwik")
     navigate("/");
   };
 
@@ -61,6 +64,7 @@ function App() {
                   <Route path="/findings" element={<Findings userRole={role} />}  />
                   <Route path="/tickets" element={<Tickets />} />
                   <Route path="/logout" element={<LogOut onLogout={handleIsLoggedIn} redirectToDefault={redirectToDefault} />} />
+                  <Route path="/scans" element={<Scans/>} />
                 </Routes>
               </main>
             </div>
@@ -84,6 +88,7 @@ function App() {
                   <Route path="/findings" element={<Findings userRole={role} />}  />
                   {/* <Route path="/tickets" element={<Tickets />} /> */}
                   <Route path="/logout" element={<LogOut onLogout={handleIsLoggedIn} redirectToDefault={redirectToDefault} />} />
+                  <Route path="/scans" element={<Scans/>} />
                 </Routes>
               </main>
             </div>

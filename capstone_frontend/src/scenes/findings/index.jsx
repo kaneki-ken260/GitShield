@@ -7,11 +7,9 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Button,
 } from "@mui/material";
 import { ColorModeContext, tokens } from "../../theme";
 import Header from "../../components/Header";
-import CircularProgress from "@mui/material/CircularProgress";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
@@ -33,11 +31,16 @@ const Findings = ({ userRole }) => {
   const [currentPage, setCurrentPage] = useState(0);
   const [loading, setLoading] = useState(false);
   const [toolSeverityChange, setToolSeverityChange] = useState(false);
+  const [organizationId, setOrganizationId] = useState(localStorage.getItem("orgId"));
+  const [accessToken, setAccessToken] = useState(localStorage.getItem("sessionToken"));
+
+  console.log(localStorage.getItem("orgId"));
+  console.log("Hello" + organizationId);
 
   const fetchData = async () => {
     try {
       const response = await fetch(
-        `http://localhost:8090/fetchFindings?page=${currentPage}&size=${pageSize}&severity=${severity}&tool=${tool}`
+        `http://localhost:8090/fetchFindings?accessToken=${accessToken}&organizationId=${organizationId}&page=${currentPage}&size=${pageSize}&severity=${severity}&tool=${tool}`
       );
       const jsonResponse = await response.json();
 
@@ -103,20 +106,18 @@ const getTimeDifferenceString = (updatedAt) => {
   return "Just now";
 };
 
-
-
-  const handleScanNowClick = async () => {
-    try {
-      setLoading(true);
-      await fetch("http://localhost:8090/fetch-and-save");
-      console.log("Scan initiated successfully");
-      fetchData();
-    } catch (error) {
-      console.error("Error initiating scan:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // const handleScanNowClick = async () => {
+  //   try {
+  //     setLoading(true);
+  //     await fetch(`http://localhost:8090/fetch-and-save?orgId=${organizationId}`);
+  //     console.log("Scan initiated successfully");
+  //     fetchData();
+  //   } catch (error) {
+  //     console.error("Error initiating scan:", error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   const getSeverityColor = (severity) => {
     switch (severity) {
@@ -256,9 +257,6 @@ const getTimeDifferenceString = (updatedAt) => {
               </Select>
             </FormControl>
           </Box>
-          <Button onClick={handleScanNowClick} variant="contained" color="primary">
-            {loading ? <CircularProgress size={24} color="inherit" /> : "Scan Now"}
-          </Button>
         </Box>
         <TableContainer component={Paper} sx={{ overflowX: "auto" }}>
           <Table>
@@ -275,7 +273,7 @@ const getTimeDifferenceString = (updatedAt) => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {findings.map((finding) => (
+              {findings && findings.map((finding) => (
                 <TableRow key={finding.id}>
                   <TableCell>{finding.id}</TableCell>
                   <TableCell>

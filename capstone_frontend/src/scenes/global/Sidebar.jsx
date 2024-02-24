@@ -128,6 +128,13 @@ const Sidebar = ({ userRole }) => {
               selected={selected}
               setSelected={setSelected}
             />
+            <Item
+              title="Scans"
+              to="/scans"
+              icon={<CalendarTodayOutlinedIcon />}
+              selected={selected}
+              setSelected={setSelected}
+            />
 
             <Typography
               variant="h6"
