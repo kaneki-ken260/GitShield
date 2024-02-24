@@ -1,5 +1,6 @@
 package com.backend.Controller;
 
+//import com.backend.Aspect.RequiresAuthorization;
 import com.backend.Entity.Findings;
 import com.backend.Repository.FindingRepository;
 import com.backend.Service.FindingService;
@@ -35,55 +36,86 @@ public class FindingController {
     @Autowired
     private FindingService findingService;
 
+    @Autowired
+    private AuthController authController;
+
     @GetMapping("/fetchFindings")
-    public Page<Findings> fetchFindings(@RequestParam(defaultValue = "0") int page,
+//    @RequiresAuthorization
+    public Page<Findings> fetchFindings(@RequestParam String accessToken,
+                                        @RequestParam String organizationId,
+                                        @RequestParam(defaultValue = "0") int page,
                                         @RequestParam(defaultValue = "10") int size,
                                         @RequestParam(required = false) String severity,
                                         @RequestParam(required = false) String tool){
 
+        if(!authController.validateUser(accessToken,organizationId)) {
+            System.out.println("Unauthorized Access");
+            return null;
+        }
         PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "updatedAt"));
+
+        System.out.println("Hello: " + accessToken);
 
         if (severity != null && tool != null) {
             if (severity.isEmpty() && tool.isEmpty()) {
-                return findingService.getAllFindings(pageable);
+                return findingService.getAllFindings(pageable, organizationId);
             } else if (severity.isEmpty()) {
-                return findingService.getFindingsForTool(tool, pageable);
+                return findingService.getFindingsForTool(tool,organizationId, pageable);
             } else if (tool.isEmpty()) {
-                return findingService.getFindingsForSeverity(severity, pageable);
+                return findingService.getFindingsForSeverity(severity,organizationId, pageable);
             } else {
-                return findingService.getFindingsForSeverityAndTool(severity, tool, pageable);
+                return findingService.getFindingsForSeverityAndTool(severity, tool,organizationId, pageable);
             }
         } else if (severity != null && severity.isEmpty()) {
-            return findingService.getAllFindings(pageable);
+            return findingService.getAllFindings(pageable, organizationId);
         } else if (tool != null && tool.isEmpty()) {
-            return findingService.getAllFindings(pageable);
+            return findingService.getAllFindings(pageable, organizationId);
         }
-        return findingService.getAllFindings(pageable);
+        return findingService.getAllFindings(pageable, organizationId);
     }
 
     @GetMapping("/fetch-and-save")
-    public Iterable<Findings> fetchAndSaveFindings() {
-        return findingService.processAndSaveFindings();
+    public void fetchAndSaveFindings(@RequestParam String accessToken,
+                                     @RequestParam String organizationId) {
+
+        if(!authController.validateUser(accessToken,organizationId)) {
+            System.out.println("Unauthorized Access");
+            return;
+        }
+        System.out.println(accessToken);
+         findingService.processAndSaveFindings(organizationId);
     }
 
     @GetMapping("/allFindings")
-    public Page<Findings> getTotalFindings(@RequestParam(defaultValue = "0", required = false) int currentPage,
-                                            @RequestParam(defaultValue = "200", required = false) int pageSize) {
+    public Page<Findings> getTotalFindings(@RequestParam String accessToken,
+                                           @RequestParam String organizationId,
+                                           @RequestParam(defaultValue = "0", required = false) int currentPage,
+                                           @RequestParam(defaultValue = "200", required = false) int pageSize) {
 
+        if(!authController.validateUser(accessToken,organizationId)) {
+            System.out.println("Unauthorized Access");
+            return null;
+        }
         currentPage = Math.max(currentPage, 0);
 
 
         // Create pageable object with provided page number, size, and sorting (if needed)
         Pageable pageable = PageRequest.of(currentPage, pageSize,Sort.by(Sort.Direction.DESC, "updatedAt"));
 
-        return findingService.getAllFindings(pageable);
+        return findingService.getAllFindings(pageable,organizationId);
 
     }
 
     @GetMapping("/codeQLFindings")
-    public Page<Findings> getCodeQLFindings(@RequestParam(defaultValue = "0", required = false) int currentPage,
+    public Page<Findings> getCodeQLFindings(@RequestParam String accessToken,
+                                            @RequestParam String organizationId,
+                                            @RequestParam(defaultValue = "0", required = false) int currentPage,
                                             @RequestParam(defaultValue = "200", required = false) int pageSize) {
         // Ensure that page number is not less than 0
+        if(!authController.validateUser(accessToken,organizationId)) {
+            System.out.println("Unauthorized Access");
+            return null;
+        }
         String tool = "codeQL";
         currentPage = Math.max(currentPage, 0);
 
@@ -91,14 +123,20 @@ public class FindingController {
         // Create pageable object with provided page number, size, and sorting (if needed)
         Pageable pageable = PageRequest.of(currentPage, pageSize, Sort.by(Sort.Direction.DESC, "updatedAt"));
 
-        return findingService.getFindingsForTool(tool, pageable);
+        return findingService.getFindingsForTool(tool,organizationId, pageable);
 
     }
 
     @GetMapping("/dependabotFindings")
-    public Page<Findings> getDependabotFindings(@RequestParam(defaultValue = "0", required = false) int currentPage,
+    public Page<Findings> getDependabotFindings(@RequestParam String accessToken,
+                                                @RequestParam String organizationId,
+                                                @RequestParam(defaultValue = "0", required = false) int currentPage,
                                                 @RequestParam(defaultValue = "200", required = false) int pageSize) {
         // Ensure that page number is not less than 0
+        if(!authController.validateUser(accessToken,organizationId)) {
+            System.out.println("Unauthorized Access");
+            return null;
+        }
         String tool = "dependabot";
         currentPage = Math.max(currentPage, 0);
 
@@ -106,14 +144,20 @@ public class FindingController {
         // Create pageable object with provided page number, size, and sorting (if needed)
         Pageable pageable = PageRequest.of(currentPage, pageSize, Sort.by(Sort.Direction.DESC, "updatedAt"));
 
-        return findingService.getFindingsForTool(tool, pageable);
+        return findingService.getFindingsForTool(tool, organizationId, pageable);
 
     }
 
     @GetMapping("/secretScanningFindings")
-    public Page<Findings> getSecretScanningFindings(@RequestParam(defaultValue = "0", required = false) int currentPage,
-                                                    @RequestParam(defaultValue = "200", required = false) int pageSize ) {
+    public Page<Findings> getSecretScanningFindings(@RequestParam String accessToken,
+                                                    @RequestParam String organizationId,
+                                                    @RequestParam(defaultValue = "0", required = false) int currentPage,
+                                                    @RequestParam(defaultValue = "200", required = false) int pageSize) {
         // Ensure that page number is not less than 0
+        if(!authController.validateUser(accessToken,organizationId)) {
+            System.out.println("Unauthorized Access");
+            return null;
+        }
         String tool = "secret scanning";
         currentPage = Math.max(currentPage, 0);
 
@@ -121,12 +165,18 @@ public class FindingController {
         // Create pageable object with provided page number, size, and sorting (if needed)
         Pageable pageable = PageRequest.of(currentPage, pageSize, Sort.by(Sort.Direction.DESC, "updatedAt"));
 
-        return findingService.getFindingsForTool(tool, pageable);
+        return findingService.getFindingsForTool(tool,organizationId, pageable);
 
     }
 
     @DeleteMapping("/delete-all")
-    public String deleteAllFindings() {
+    public String deleteAllFindings(@RequestParam String accessToken,
+                                    @RequestParam String organizationId) {
+
+        if(!authController.validateUser(accessToken,organizationId)) {
+            //System.out.println("Unauthorized Access");
+            return "Unauthorized Access";
+        }
         findingService.deleteAllFindings();
         return "All findings deleted from Elasticsearch.";
     }

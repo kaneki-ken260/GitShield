@@ -56,41 +56,25 @@ public class FindingService {
 //        return findingRepository.save(finding);
 //    }
 
-    public Page<Findings> getAllFindings(Pageable pageable){
-
-        return findingRepository.findAll(pageable);
+    public Page<Findings> getAllFindings(Pageable pageable, String organizationId){
+//        System.out.println("Service se hoon: " + organizationId);
+        return findingRepository.findByOrganizationId(organizationId,pageable);
     }
 
-    public Page<Findings> getFindingsForSeverity(String severity, Pageable pageable){
-        return findingRepository.findBySeverity(severity,pageable);
+    public Page<Findings> getFindingsForSeverity(String severity,String organizationId, Pageable pageable){
+        return findingRepository.findBySeverityAndOrganizationId(severity,organizationId,pageable);
     }
 
-    public Page<Findings> getFindingsForTool(String tool, Pageable pageable){
-        return findingRepository.findByTool(tool,pageable);
+    public Page<Findings> getFindingsForTool(String tool, String organizationId, Pageable pageable){
+        return findingRepository.findByToolAndOrganizationId(tool,organizationId,pageable);
     }
 
-    public Page<Findings> getFindingsForStatus(String status, Pageable pageable){
-        return findingRepository.findByTool(status,pageable);
-    }
-
-    public Page<Findings> getFindingsForSeverityAndTool(String severity, String tool, Pageable pageable){
-        return findingRepository.findBySeverityAndTool(severity,tool,pageable);
-    }
-
-    public Page<Findings> getFindingsForSeverityAndStatus(String severity, String status, Pageable pageable){
-        return findingRepository.findBySeverityAndStatus(severity,status,pageable);
-    }
-
-    public Page<Findings> getFindingsForToolAndStatus(String tool, String status, Pageable pageable){
-        return findingRepository.findByToolAndStatus(tool,status,pageable);
-    }
-
-    public Page<Findings> getFindingsForSeverityAndToolAndStatus(String severity, String tool, String status, Pageable pageable){
-        return findingRepository.findBySeverityAndToolAndStatus(severity,tool,status,pageable);
+    public Page<Findings> getFindingsForSeverityAndTool(String severity, String tool, String organizationId ,Pageable pageable){
+        return findingRepository.findBySeverityAndToolAndOrganizationId(severity,tool,organizationId,pageable);
     }
 
 
-    public Iterable<Findings> processAndSaveFindings() {
+    public void processAndSaveFindings(String organizationId) {
 
         List<JsonNode> findingsList = new ArrayList<>();
 
@@ -119,7 +103,7 @@ public class FindingService {
 //        saveJsonNodes(findingsList);
 
         //Create HashTable and store Hash for each issue in ES
-        Iterable<Findings> findingsInElasticSearch = findingRepository.findAll();
+        Iterable<Findings> findingsInElasticSearch = findingRepository.findByOrganizationId(organizationId);
         Hashtable<String, Findings> hashtable = new Hashtable<>();
 
         for (Findings finding : findingsInElasticSearch) {
@@ -159,7 +143,7 @@ public class FindingService {
                     kafkaProducerService.sendMessage(findingFromGithub);
 
 //                    findingRepository.deleteById(hashtable.get(currHash).getId());
-                    saveJsonNode(findingFromGithub);
+                    saveJsonNode(findingFromGithub, organizationId);
                 }
             }
 
@@ -172,14 +156,14 @@ public class FindingService {
                 ((ObjectNode) findingFromGithub).put("status", getMappingForStatus(findingFromGithub.get("status").asText()));
                 kafkaProducerService.sendMessage(findingFromGithub);
 
-                hashtable.put(currHash,convertJsonNodeToFindings(findingFromGithub));
-                saveJsonNode(findingFromGithub);
+                hashtable.put(currHash,convertJsonNodeToFindings(findingFromGithub,organizationId));
+                saveJsonNode(findingFromGithub, organizationId);
             }
         }
 
         // Filtering the queries.
-        Sort sort = Sort.by(Sort.Direction.DESC, "updatedAt");
-        return findingRepository.findAll(sort);
+        // Sort sort = Sort.by(Sort.Direction.DESC, "updatedAt");
+        //return findingRepository.findByOrganizationId(organizationId);
         }
 
         public String getMappingForSeverity(String severity){
@@ -200,7 +184,7 @@ public class FindingService {
             };
         }
 
-    public void saveJsonNode(JsonNode jsonNode) {
+    public void saveJsonNode(JsonNode jsonNode, String organizationId) {
 
             Findings finding = new Findings();
 
@@ -250,6 +234,8 @@ public class FindingService {
                 finding.setUpdatedAt(jsonNode.get("updatedAt").asText());
             }
 
+            finding.setOrganizationId(organizationId);
+
         findingRepository.save(finding);
     }
 
@@ -257,7 +243,7 @@ public class FindingService {
         findingRepository.deleteAll();
     }
 
-    public Findings convertJsonNodeToFindings(JsonNode jsonNode) {
+    public Findings convertJsonNodeToFindings(JsonNode jsonNode, String organizationId) {
 
         if(jsonNode == null) return null;
 
@@ -308,6 +294,8 @@ public class FindingService {
         if (jsonNode.has("updatedAt")) {
             finding.setUpdatedAt(jsonNode.get("updatedAt").asText());
         }
+
+        finding.setOrganizationId(organizationId);
 
         return finding;
     }

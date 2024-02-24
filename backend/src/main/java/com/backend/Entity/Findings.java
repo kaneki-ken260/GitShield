@@ -12,7 +12,7 @@ import org.springframework.data.elasticsearch.annotations.Field;
 @AllArgsConstructor
 @Data
 @NoArgsConstructor
-@Document(indexName = "ritwikcapstone")
+@Document(indexName = "ritwikcapstonearmor")
 public class Findings {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -74,6 +74,9 @@ public class Findings {
 
     @Field
     private String secret;
+
+    @Field
+    private String organizationId;
 
     // Constructors, getters, setters...
 
@@ -187,6 +190,14 @@ public class Findings {
 
     public void setEndLine(String endLine) {
         this.endLine = endLine;
+    }
+
+    public String getOrganizationId() {
+        return organizationId;
+    }
+
+    public void setOrganizationId(String organizationId) {
+        this.organizationId = organizationId;
     }
 
     public JsonNode convertFindingsToJsonNode(Findings finding) {

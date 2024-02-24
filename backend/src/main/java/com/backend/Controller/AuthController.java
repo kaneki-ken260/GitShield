@@ -1,5 +1,6 @@
 package com.backend.Controller;
 
+//import com.backend.Aspect.RequiresAuthorization;
 import com.backend.Entity.Organization;
 import com.backend.Entity.Role;
 import com.backend.Entity.User;
@@ -8,11 +9,14 @@ import com.backend.Repository.RoleRepository;
 import com.backend.Repository.UserOrganizationRoleRepository;
 import com.backend.Repository.UserRepository;
 import com.backend.Service.UserService;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.util.Map;
 import java.util.Objects;
@@ -33,8 +37,35 @@ public class AuthController {
     @Autowired
     private UserOrganizationRoleRepository userOrganizationRoleRepository;
 
+    public boolean validateUser(String accessToken, String organizationId){
+        if(accessToken==null || accessToken.isEmpty()) return false;
+
+        else{
+            String googleApiUrl = "https://oauth2.googleapis.com/tokeninfo?id_token=" + accessToken;
+
+            // Make a request to Google's token verification endpoint
+            RestTemplate restTemplate = new RestTemplate();
+            ResponseEntity<Map> responseEntity = restTemplate.getForEntity(googleApiUrl, Map.class);
+
+            Map<String, Object> userInfo = responseEntity.getBody();
+            assert userInfo != null;
+            String name = userInfo.get("name").toString();
+            String email = userInfo.get("email").toString();
+
+            User newUser = userRepository.findByUserEmail(email);
+
+            if(newUser==null) return false;
+
+            else{
+                UserOrganizationRole userOrganizationRole = userOrganizationRoleRepository.findByUser(newUser);
+                Organization organization = userOrganizationRole.getOrganization();
+
+                return organization.getOrganizationId().equals(organizationId);
+            }
+        }
+    }
     @PostMapping("/auth")
-    public String receiveToken(@RequestBody Map<String, String> requestBody){
+    public JsonNode receiveToken(@RequestBody Map<String, String> requestBody){
         //System.out.println("Credential:" + requestBody.get("credential"));
         try {
             String idToken = requestBody.get("credential");
@@ -60,7 +91,7 @@ public class AuthController {
         }
     }
 
-    public String checkUserInfo(String name, String email){
+    public JsonNode checkUserInfo(String name, String email){
 
         // Check if the user exists in the database
         User user = userService.loginUser(email);
@@ -73,23 +104,51 @@ public class AuthController {
             Role role = userOrganizationRole.getRole(); // Accessing that user's role
             Organization organization = userOrganizationRole.getOrganization();
 
+            //Setting the org-id to access the findings table
+            JsonNode userData;
+
+            // Create an ObjectMapper
+            ObjectMapper objectMapper = new ObjectMapper();
+            ObjectNode objectNode = objectMapper.createObjectNode();
+
+            objectNode.put("role", getRoleOfCurrentUser(role));
+            objectNode.put("orgId", getOrganizationIdOfCurrentUser(organization));
+
+            userData = objectNode;
+
             System.out.println("Role of new user: " + getRoleOfCurrentUser(role));
 
             //return "New User Created: " + newUser.getUserName();
-            return getRoleOfCurrentUser(role);
+            return userData;
         } else {
 
             UserOrganizationRole userOrganizationRole = userOrganizationRoleRepository.findByUser(user); // Get already existing user from that table
             Role role = userOrganizationRole.getRole();
             Organization organization = userOrganizationRole.getOrganization();
-            
+
+            //Setting the org-id to access the findings table
+            JsonNode userData;
+
+            // Create an ObjectMapper
+            ObjectMapper objectMapper = new ObjectMapper();
+            ObjectNode objectNode = objectMapper.createObjectNode();
+
+            objectNode.put("role", getRoleOfCurrentUser(role));
+            objectNode.put("orgId", getOrganizationIdOfCurrentUser(organization));
+
+            userData = objectNode;
+
             System.out.println("Existing user logging in: " + getRoleOfCurrentUser(role));
 
-            return getRoleOfCurrentUser(role);
+            return userData;
         }
     }
 
     public String getRoleOfCurrentUser(Role role){
         return role.getRoleName();
+    }
+
+    public String getOrganizationIdOfCurrentUser(Organization organization){
+        return organization.getOrganizationId();
     }
 }

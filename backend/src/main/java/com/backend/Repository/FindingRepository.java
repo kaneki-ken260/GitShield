@@ -12,19 +12,10 @@ import java.util.List;
 @Repository
 public interface FindingRepository extends ElasticsearchRepository<Findings, Long> {
 
-    Page<Findings> findByTool(String tool, Pageable pageable);
-
-    Page<Findings> findBySeverity(String severity, Pageable pageable);
-
-    Page<Findings> findByStatus(String status, Pageable pageable);
-
-    Page<Findings> findBySeverityAndTool(String severity, String tool, Pageable pageable);
-
-    Page<Findings> findBySeverityAndStatus(String severity, String status, Pageable pageable);
-
-    Page<Findings> findByToolAndStatus(String tool, String status, Pageable pageable);
-
-    Page<Findings> findBySeverityAndToolAndStatus(String severity, String tool,  String status, Pageable pageable);
-
-//    Page<Findings> findAll(Pageable pageable);
+    Page<Findings> findByOrganizationId(String organizationId, Pageable pageable);
+    Iterable<Findings> findByOrganizationId(String organizationId);
+//    Iterable<Findings> findAll(String organizationId);
+    Page<Findings> findByToolAndOrganizationId(String tool, String organizationId, Pageable pageable);
+    Page<Findings> findBySeverityAndOrganizationId(String severity, String organizationId, Pageable pageable);
+    Page<Findings> findBySeverityAndToolAndOrganizationId(String severity, String tool, String organizationId, Pageable pageable);
 }
