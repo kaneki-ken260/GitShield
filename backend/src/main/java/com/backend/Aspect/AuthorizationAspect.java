@@ -1,6 +1,12 @@
 package com.backend.Aspect;
 
 import com.backend.Controller.AuthController;
+import com.backend.Entity.Organization;
+import com.backend.Entity.User;
+import com.backend.Entity.UserOrganizationRole;
+import com.backend.Repository.UserOrganizationRoleRepository;
+import com.backend.Repository.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Aspect;
@@ -9,7 +15,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
+import javax.naming.AuthenticationException;
 import java.util.Map;
 
 @Aspect
@@ -17,28 +27,47 @@ import java.util.Map;
 public class AuthorizationAspect {
 
     @Autowired
-    private AuthController authController;
-    @Before("@annotation(com.backend.Aspect.RequiresAuthorization)")
-    public ResponseEntity<?> verifyUserDetails(ProceedingJoinPoint joinPoint) {
-        Object[] args = joinPoint.getArgs();
+    private UserRepository userRepository;
 
-        if (args.length > 0 && args[0] instanceof String) {
-            String accessToken = (String) args[0];
+    @Autowired
+    private UserOrganizationRoleRepository userOrganizationRoleRepository;
 
-            System.out.println(accessToken);
+    @Before("@annotation(RequiresAuthorization)")
+    public void verifyUserDetails() throws AuthenticationException {
 
-//            if (idToken == null) {
-//                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
-//            }
+        ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        HttpServletRequest request = requestAttributes.getRequest();
 
-            try {
-                return (ResponseEntity<?>) joinPoint.proceed();
-            } catch (Throwable throwable) {
-                throwable.printStackTrace();
-                return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-            }
+        String organizationId = request.getHeader("organizationId");
+        String accessToken = request.getHeader("accessToken");
+
+        System.out.println("Aspect chal raha h: " + accessToken);
+
+        if (accessToken == null || accessToken.isEmpty()) {
+            throw new AuthenticationException("You are not authorized to access this endpoint");
         } else {
-            throw new IllegalArgumentException("Method annotated with @RequiresAuthorization must have a String parameter for the access token");
+            String googleApiUrl = "https://oauth2.googleapis.com/tokeninfo?id_token=" + accessToken;
+
+            // Make a request to Google's token verification endpoint
+            RestTemplate restTemplate = new RestTemplate();
+            ResponseEntity<Map> responseEntity = restTemplate.getForEntity(googleApiUrl, Map.class);
+
+            Map<String, Object> userInfo = responseEntity.getBody();
+            assert userInfo != null;
+            String name = userInfo.get("name").toString();
+            String email = userInfo.get("email").toString();
+
+            User newUser = userRepository.findByUserEmail(email);
+            System.out.println("Aspect: " + newUser);
+            if (newUser == null) {
+                throw new AuthenticationException("You need to login first");
+            } else {
+                UserOrganizationRole userOrganizationRole = userOrganizationRoleRepository.findByUser(newUser);
+                Organization organization = userOrganizationRole.getOrganization();
+
+                if (!organization.getOrganizationId().equals(organizationId))
+                    throw new AuthenticationException("You are not authorized to access this data");
+            }
         }
 
         // If requestBody is not found or if the method signature changes unexpectedly

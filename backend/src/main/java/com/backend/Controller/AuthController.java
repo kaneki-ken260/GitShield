@@ -1,6 +1,7 @@
 package com.backend.Controller;
 
 //import com.backend.Aspect.RequiresAuthorization;
+import com.backend.Aspect.RequiresAuthorization;
 import com.backend.Entity.Organization;
 import com.backend.Entity.Role;
 import com.backend.Entity.User;
@@ -10,6 +11,7 @@ import com.backend.Repository.UserOrganizationRoleRepository;
 import com.backend.Repository.UserRepository;
 import com.backend.Service.UserService;
 import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -65,10 +67,10 @@ public class AuthController {
         }
     }
     @PostMapping("/auth")
-    public JsonNode receiveToken(@RequestBody Map<String, String> requestBody){
+    public JsonNode receiveToken(HttpServletRequest request){
         //System.out.println("Credential:" + requestBody.get("credential"));
         try {
-            String idToken = requestBody.get("credential");
+            String idToken = request.getHeader("credential");
             String googleApiUrl = "https://oauth2.googleapis.com/tokeninfo?id_token=" + idToken;
 
             // Make a request to Google's token verification endpoint
@@ -113,6 +115,7 @@ public class AuthController {
 
             objectNode.put("role", getRoleOfCurrentUser(role));
             objectNode.put("orgId", getOrganizationIdOfCurrentUser(organization));
+            objectNode.put("name", name);
 
             userData = objectNode;
 
@@ -135,6 +138,7 @@ public class AuthController {
 
             objectNode.put("role", getRoleOfCurrentUser(role));
             objectNode.put("orgId", getOrganizationIdOfCurrentUser(organization));
+            objectNode.put("name", name);
 
             userData = objectNode;
 

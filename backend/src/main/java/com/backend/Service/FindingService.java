@@ -8,6 +8,7 @@ import com.backend.Repository.FindingRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.gson.Gson;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -15,9 +16,16 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.elasticsearch.client.elc.ElasticsearchTemplate;
 import org.springframework.stereotype.Service;
+
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class FindingService {
@@ -57,7 +65,6 @@ public class FindingService {
 //    }
 
     public Page<Findings> getAllFindings(Pageable pageable, String organizationId){
-//        System.out.println("Service se hoon: " + organizationId);
         return findingRepository.findByOrganizationId(organizationId,pageable);
     }
 
@@ -80,6 +87,8 @@ public class FindingService {
 
         //Deleting all data from the elasticsearch
         //findingRepository.deleteAll();
+
+//        System.out.println("Service se hoon: " + organizationId);
 
         // Fetch and parse data from CodeQL
         List<JsonNode> codeqlFindings = githubDataParser.parseGitHubData(githubApiUrlCodeScan, "CodeQL");
@@ -115,7 +124,6 @@ public class FindingService {
         //Iterate through findingsList and generate its hash and check if it is present in HashTable or not
         // If yes then check the status has changed or not -> if yes then remove the entry from es and add this new one or else discard
         // If no then save this issue in ES
-
         for (JsonNode findingFromGithub: findingsList){
             String currHash = hashService.generateHashValue(findingFromGithub);
 //            System.out.println(currHash);
@@ -140,10 +148,11 @@ public class FindingService {
                     ((ObjectNode) findingFromGithub).put("status", getMappingForStatus(stateInFindingFromGithub));
                     ((ObjectNode) findingFromGithub).put("change", "state change");
                     ((ObjectNode) findingFromGithub).put("id", esId);
+                    ((ObjectNode) findingFromGithub).put("organizationId", organizationId);
                     kafkaProducerService.sendMessage(findingFromGithub);
 
 //                    findingRepository.deleteById(hashtable.get(currHash).getId());
-                    saveJsonNode(findingFromGithub, organizationId);
+                    saveJsonNode(findingFromGithub);
                 }
             }
 
@@ -154,10 +163,11 @@ public class FindingService {
 
                 //Mapping the status field as of Armorcode
                 ((ObjectNode) findingFromGithub).put("status", getMappingForStatus(findingFromGithub.get("status").asText()));
+                ((ObjectNode) findingFromGithub).put("organizationId", organizationId);
                 kafkaProducerService.sendMessage(findingFromGithub);
 
                 hashtable.put(currHash,convertJsonNodeToFindings(findingFromGithub,organizationId));
-                saveJsonNode(findingFromGithub, organizationId);
+                saveJsonNode(findingFromGithub);
             }
         }
 
@@ -165,6 +175,112 @@ public class FindingService {
         // Sort sort = Sort.by(Sort.Direction.DESC, "updatedAt");
         //return findingRepository.findByOrganizationId(organizationId);
         }
+
+    public void changeFindingStatus(String tool, String issueId, String newState, String dismissal) {
+        // Define API URL and request body variables
+        String apiUrl = "";
+        String requestBodyJson = "";
+
+        // Log input parameters for debugging
+        System.out.println("FRONTEND CALLING: " + issueId + " : " + newState + " : " + tool + " : " + dismissal);
+
+        // Determine API URL and request body based on the tool
+        if(newState.equalsIgnoreCase("open"))
+        {
+            switch (tool.toLowerCase()) {
+                case "codeql":
+                    apiUrl = githubApiUrlCodeScan + "/" + issueId;
+                    newState = newState.equalsIgnoreCase("mitigated") ? "dismissed" : "open";
+                    requestBodyJson = new Gson().toJson(Map.of(
+                            "state", newState
+                    ));
+                    break;
+                case "dependabot":
+                    apiUrl = githubApiUrlDependabot + "/" + issueId;
+                    newState = newState.equalsIgnoreCase("mitigated") ? "dismissed" : "open";
+                    requestBodyJson = new Gson().toJson(Map.of(
+                            "state", newState
+                    ));
+                    break;
+                case "secretscan":
+                    apiUrl = githubApiUrlSecretScan + "/" + issueId;
+                    newState = newState.equalsIgnoreCase("mitigated") ? "resolved" : "open";
+                    requestBodyJson = new Gson().toJson(Map.of(
+                            "state", newState
+                    ));
+                    break;
+                default:
+                    System.err.println("Invalid tool name: " + tool);
+                    return; // Exit method if tool name is invalid
+            }
+        }
+
+        else {
+            switch (tool.toLowerCase()) {
+                case "codeql":
+                    apiUrl = githubApiUrlCodeScan + "/" + issueId;
+                    newState = newState.equalsIgnoreCase("mitigated") ? "dismissed" : "open";
+                    if(!dismissal.equalsIgnoreCase("false positive"))
+                        dismissal = "won't fix";
+
+                    requestBodyJson = new Gson().toJson(Map.of(
+                            "state", newState,
+                            "dismissed_reason", dismissal,
+                            "dismissed_comment", "This alert is not actually correct, because there's a sanitizer included in the library."
+                    ));
+                    break;
+                case "dependabot":
+                    apiUrl = githubApiUrlDependabot + "/" + issueId;
+                    newState = newState.equalsIgnoreCase("mitigated") ? "dismissed" : "open";
+                    if(!dismissal.equalsIgnoreCase("false positive"))
+                        dismissal = "tolerable_risk";
+                    else
+                        dismissal = "inaccurate";
+                    requestBodyJson = new Gson().toJson(Map.of(
+                            "state", newState,
+                            "dismissed_reason", dismissal,
+                            "dismissed_comment", "This alert is accurate but we use a sanitizer."
+                    ));
+                    break;
+                case "secretscan":
+                    apiUrl = githubApiUrlSecretScan + "/" + issueId;
+                    newState = newState.equalsIgnoreCase("mitigated") ? "resolved" : "open";
+                    if(!dismissal.equalsIgnoreCase("false_positive"))
+                        dismissal = "wont_fix";
+
+                    requestBodyJson = new Gson().toJson(Map.of(
+                            "state", newState,
+                            "resolution", dismissal
+                    ));
+                    break;
+                default:
+                    System.err.println("Invalid tool name: " + tool);
+                    return; // Exit method if tool name is invalid
+            }
+        }
+
+        try {
+            // Set headers for authorization and content type
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(apiUrl))
+                    .header("Authorization", "Bearer " + githubAccessToken)
+                    .header("Content-Type", "application/json")
+                    .method("PATCH", HttpRequest.BodyPublishers.ofString(requestBodyJson))
+                    .build();
+            // Send HTTP request and handle response
+            HttpClient client = HttpClient.newHttpClient();
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            // Check response status
+            if (response.statusCode() == 200) {
+                System.out.println("Status of the finding updated successfully.");
+            } else {
+                System.err.println("Error updating finding status. Status code: " + response.statusCode());
+                System.err.println("Response body: " + response.body());
+            }
+        } catch (IOException | InterruptedException e) {
+            System.err.println("Error updating finding status: " + e.getMessage());
+        }
+    }
 
         public String getMappingForSeverity(String severity){
             return switch (severity) {
@@ -184,7 +300,7 @@ public class FindingService {
             };
         }
 
-    public void saveJsonNode(JsonNode jsonNode, String organizationId) {
+    public void saveJsonNode(JsonNode jsonNode) {
 
             Findings finding = new Findings();
 
@@ -233,8 +349,12 @@ public class FindingService {
             if (jsonNode.has("updatedAt")) {
                 finding.setUpdatedAt(jsonNode.get("updatedAt").asText());
             }
-
-            finding.setOrganizationId(organizationId);
+            if (jsonNode.has("issueNumber")){
+                finding.setIssueNumber(jsonNode.get("issueNumber").asText());
+            }
+            if (jsonNode.has("organizationId")){
+                finding.setOrganizationId(jsonNode.get("organizationId").asText());
+            }
 
         findingRepository.save(finding);
     }
@@ -245,7 +365,10 @@ public class FindingService {
 
     public Findings convertJsonNodeToFindings(JsonNode jsonNode, String organizationId) {
 
-        if(jsonNode == null) return null;
+        if(jsonNode == null){
+            System.out.println("null aa rha bhai!!");
+            return null;
+        }
 
         Findings finding = new Findings();
 
@@ -294,7 +417,11 @@ public class FindingService {
         if (jsonNode.has("updatedAt")) {
             finding.setUpdatedAt(jsonNode.get("updatedAt").asText());
         }
+        if (jsonNode.has("issueNumber")){
+            finding.setIssueNumber(jsonNode.get("issueNumber").asText());
+        }
 
+        System.out.println("conversion time: " + organizationId);
         finding.setOrganizationId(organizationId);
 
         return finding;

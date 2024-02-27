@@ -33,6 +33,7 @@ public class KafkaConsumerService {
             String priority = findings.get("severity").asText();
             String statusChange = findings.get("change").asText();
             String findingStatus = findings.get("status").asText();
+            String organizationId = findings.get("organizationId").asText();
 
             HashMap<String, String> workFlowOfJira = new HashMap<>();
 
@@ -43,11 +44,11 @@ public class KafkaConsumerService {
             workFlowOfJira.put("Done","To Do");
 
             if(statusChange.equals("new issue") && findingStatus.equals("open")){
-                ticketService.createJiraTicket(findingId,summary,description,issueType,priority, statusChange, findingStatus);
+                ticketService.createJiraTicket(findingId,summary,description,issueType,priority, statusChange, findingStatus, organizationId);
             }
 
             else if(statusChange.equals("state change")){
-                ticketService.changeStatusOfTicket(findingId,findingStatus, workFlowOfJira);
+                ticketService.changeStatusOfTicket(findingId,findingStatus, workFlowOfJira, organizationId);
             }
 
         } catch (Exception e) {

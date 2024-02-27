@@ -40,8 +40,8 @@ public class TicketService {
     @Autowired
     private TicketRepository ticketRepository;
 
-    public List<JsonNode> getAllTickets(String jiraApiUrl){
-        return jiraDataParser.parseJiraData(jiraApiUrl);
+    public List<JsonNode> getAllTickets(String jiraApiUrl, String organizationId){
+        return jiraDataParser.parseJiraData(jiraApiUrl, organizationId);
     }
 
     public String getMappingForPriority(String priority){
@@ -55,7 +55,7 @@ public class TicketService {
         };
     }
 
-    public void createJiraTicket(Long findingId, String summary, String description, String issueType, String priority, String statusChange, String findingStatus) {
+    public void createJiraTicket(Long findingId, String summary, String description, String issueType, String priority, String statusChange, String findingStatus, String organizationId) {
         try {
             // Use Jackson ObjectMapper to build JSON payload
             ObjectMapper objectMapper = new ObjectMapper();
@@ -100,7 +100,7 @@ public class TicketService {
                 JsonNode responseBody = getTicketUsingId(Objects.requireNonNull(response.getBody()).path("id").asText());
                 ((ObjectNode) responseBody).put("findingId", findingId);
 
-                saveJsonNode(responseBody);
+                saveJsonNode(responseBody, organizationId);
 
             } else {
                 System.err.println("Failed to create Jira ticket. Response: " + response.getBody());
@@ -196,7 +196,7 @@ public class TicketService {
         return "Task";
     }
 
-    private void saveJsonNode(JsonNode jsonNode){
+    private void saveJsonNode(JsonNode jsonNode, String organizationId){
         Tickets ticket = new Tickets();
 
         if (jsonNode.has("id")) {
@@ -227,6 +227,8 @@ public class TicketService {
             ticket.setFindingId(jsonNode.get("findingId").asLong());
         }
 
+        ticket.setOrganizationId(organizationId);
+
         long milliseconds = System.currentTimeMillis();
         Instant instant = Instant.ofEpochMilli(milliseconds);
         ticket.setUpdatedAt(instant.atZone(ZoneId.systemDefault()).toLocalDateTime());
@@ -234,9 +236,9 @@ public class TicketService {
         ticketRepository.save(ticket);
     }
 
-    public void changeStatusOfTicket(Long findingId, String findingStatus, HashMap<String, String> workFlowOfJira){
+    public void changeStatusOfTicket(Long findingId, String findingStatus, HashMap<String, String> workFlowOfJira, String organizationId){
 
-        Tickets ticket = ticketRepository.findByFindingId(findingId);
+        Tickets ticket = ticketRepository.findByFindingIdAndOrganizationId(findingId, organizationId);
         String ticketId = "";
 
         long milliseconds = System.currentTimeMillis();

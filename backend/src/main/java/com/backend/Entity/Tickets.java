@@ -12,32 +12,35 @@ public class Tickets {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long table_id;
 
-    @Column(name = "findingId")
+    @Column(name = "finding_id")
     private Long findingId;
 
-    @Column(name="ticketId")
+    @Column(name="ticket_id")
     private String id;
 
-    @Column(name = "ticketPriority")
+    @Column(name = "ticket_priority")
     private String priority;
 
-    @Column(name = "ticketScanType")
+    @Column(name = "ticket_scan_type")
     private String scanType;
 
-    @Column(name = "ticketState")
+    @Column(name = "ticket_state")
     private String status;
 
-    @Column(name = "ticketCreatedBy")
+    @Column(name = "ticket_created_by")
     private String createdBy;
 
-    @Column(name = "ticketSummary")
+    @Column(name = "ticket_summary")
     private String summary;
 
-    @Column(name = "ticketDescription")
+    @Column(name = "ticket_description")
     private String Description;
 
-    @Column(name = "ticketIssueType")
+    @Column(name = "ticket_issue_type")
     private String issueType;
+
+    @Column(name = "organization_id")
+    private String organizationId;
 
     private LocalDateTime updatedAt;
 
@@ -120,5 +123,13 @@ public class Tickets {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getOrganizationId() {
+        return organizationId;
+    }
+
+    public void setOrganizationId(String organizationId) {
+        this.organizationId = organizationId;
     }
 }

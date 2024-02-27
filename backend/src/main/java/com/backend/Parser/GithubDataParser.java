@@ -62,6 +62,7 @@ public class GithubDataParser {
             simplifiedNode.put("secret", extractSecret(node,tool));
             simplifiedNode.put("createdAt", extractCreatedAt(node,tool));
             simplifiedNode.put("updatedAt", extractUpdatedAt(node,tool));
+            simplifiedNode.put("issueNumber", extractIssueNumber(node,tool));
 
             simplifiedData.add(simplifiedNode);
         }
@@ -207,6 +208,10 @@ public class GithubDataParser {
 
     private String extractUpdatedAt(JsonNode node, String tool){
             return node.path("updated_at").asText();
+    }
+
+    private String extractIssueNumber(JsonNode node, String tool){
+        return node.path("number").asText();
     }
 }
 

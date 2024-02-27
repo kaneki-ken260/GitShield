@@ -13,10 +13,11 @@ import java.util.List;
 @Repository
 public interface TicketRepository extends JpaRepository<Tickets, String> {
 
-    Tickets findByFindingId(Long findingId);
+    Page<Tickets> findByOrganizationId(String organizationId, Pageable pageable);
+    Tickets findByFindingIdAndOrganizationId(Long findingId, String OrganizationId);
 
 //    Page<Tickets> findAll(Pageable pageable);
 
-    Page<Tickets> findByPriority(String priority, Pageable pageable);
+    Page<Tickets> findByPriorityAndOrganizationId(String priority, String organizationId, Pageable pageable);
 
 }

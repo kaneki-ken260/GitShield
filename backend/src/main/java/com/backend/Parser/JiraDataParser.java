@@ -24,7 +24,7 @@ public class JiraDataParser {
     @Value(("${jira.Username}"))
     private String jiraUsername;
 
-    public List<JsonNode> parseJiraData(String jiraApiUrl) {
+    public List<JsonNode> parseJiraData(String jiraApiUrl, String organizationId) {
         RestTemplate restTemplate = new RestTemplate();
 
         HttpHeaders headers = new HttpHeaders();
@@ -38,13 +38,13 @@ public class JiraDataParser {
         );
 
         if (responseEntity.getBody() != null) {
-            return simplifyJiraData(responseEntity.getBody());
+            return simplifyJiraData(responseEntity.getBody(), organizationId);
         }
 
         return null;
     }
 
-    private List<JsonNode> simplifyJiraData(JsonNode originalData) {
+    private List<JsonNode> simplifyJiraData(JsonNode originalData, String organizationId) {
         //To convert Java Objects to and from JSON
         ObjectMapper objectMapper = new ObjectMapper();
         List<JsonNode> simplifiedData = new ArrayList<>();
@@ -61,6 +61,7 @@ public class JiraDataParser {
             simplifiedNode.put("summary", extractSummary(node));
             simplifiedNode.put("description", extractDescription(node));
             simplifiedNode.put("issueType", extractIssueType(node));
+            simplifiedNode.put("organizationId", organizationId);
 
             simplifiedData.add(simplifiedNode);
         }
