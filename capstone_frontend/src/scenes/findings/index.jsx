@@ -7,6 +7,8 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Button,
+  Menu 
 } from "@mui/material";
 import { ColorModeContext, tokens } from "../../theme";
 import Header from "../../components/Header";
@@ -18,8 +20,9 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
 import Pagination from "@mui/material/Pagination";
+import axios from "axios";
 
-const Findings = ({ userRole }) => {
+const Findings = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const [findings, setFindings] = useState([]);
@@ -33,16 +36,28 @@ const Findings = ({ userRole }) => {
   const [toolSeverityChange, setToolSeverityChange] = useState(false);
   const [organizationId, setOrganizationId] = useState(localStorage.getItem("orgId"));
   const [accessToken, setAccessToken] = useState(localStorage.getItem("sessionToken"));
+  const [userRole, setUserRole] = useState(localStorage.getItem("userRole"));
+  const [anchorEl, setAnchorEl] = useState(null);
 
-  console.log(localStorage.getItem("orgId"));
-  console.log("Hello" + organizationId);
+  // console.log(localStorage.getItem("orgId"));
+  // console.log("Hello" + organizationId);
 
   const fetchData = async () => {
     try {
-      const response = await fetch(
-        `http://localhost:8090/fetchFindings?accessToken=${accessToken}&organizationId=${organizationId}&page=${currentPage}&size=${pageSize}&severity=${severity}&tool=${tool}`
+      const response = await axios.post(
+        `http://localhost:8090/fetchFindings?page=${currentPage}&size=${pageSize}&severity=${severity}&tool=${tool}`,
+          { },
+          {
+              headers: {
+                  'Content-Type': 'application/json',
+                  // 'Authorization': `Bearer ${accessToken}` ,// Add authorization header
+                  'accessToken': accessToken,
+                  'organizationId': organizationId
+              }
+          }
       );
-      const jsonResponse = await response.json();
+      console.log(response);
+      const jsonResponse = await response.data;
 
       setFindings(jsonResponse.content);
       setTotalPages(jsonResponse.totalPages);
@@ -105,6 +120,112 @@ const getTimeDifferenceString = (updatedAt) => {
 
   return "Just now";
 };
+
+// const handleActionClick = async (tool, status) => {
+//   try {
+//       await axios.post(
+//           'your_backend_endpoint',
+//           { tool, status },
+//           {
+//               headers: {
+//                   'Content-Type': 'application/json',
+//                   // Add your authorization header if needed
+//               }
+//           }
+//       );
+//       // Handle success or update UI as needed
+//   } catch (error) {
+//       console.error('Error performing action:', error);
+//       // Handle error or show error message to the user
+//   }
+// };
+
+const handleActionChange = async (issueNumber, tool, newState, action) => {
+  try {
+    console.log("action change se hoon: " + issueNumber);
+    const response = await axios.post(
+      `http://localhost:8090/updateState/${issueNumber}?newState=${newState}&tool=${tool}&dismissal=${action}`,
+        { },
+        {
+            headers: {
+                'Content-Type': 'application/json',
+                // 'Authorization': `Bearer ${accessToken}` ,// Add authorization header
+                'accessToken': accessToken,
+                'organizationId': organizationId
+            }
+        }
+    );
+    if (!response.ok) {
+      throw new Error('Failed to update finding state');
+    }
+    // If successful, re-fetch the findings
+    await fetchData();
+  } catch (error) {
+    setError(error);
+  }
+};
+
+const handleClick = (event) => {
+  console.log("click se hoon: " + event.currentTarget)
+  setAnchorEl(event.currentTarget);
+};
+
+const handleAction = (action) => {
+  handleClose();
+  const nextState = action === "open" ? "open" : "mitigated"; // Update next state based on action
+  console.log("Action se hoon: " + anchorEl.dataset.issueNumber)
+  handleActionChange(anchorEl.dataset.issueNumber, anchorEl.dataset.tool, nextState, action);
+};
+
+const handleClose = () => {
+  setAnchorEl(null);
+};
+
+const renderMenuItems = () => {
+  if (anchorEl && anchorEl.dataset) {
+    const tool = anchorEl.dataset.tool;
+    const issueStatus = anchorEl.dataset.status;
+    console.log("Boo" + issueStatus);
+    if(issueStatus === "mitigated"){
+        return (
+          [
+            <MenuItem key="open" onClick={() => handleAction('open')}>Open</MenuItem>
+          ]
+        );
+    }
+
+    else{
+      switch (tool) {
+      case 'CodeQL':
+        return (
+          [
+            <MenuItem key="accept_risk" onClick={() => handleAction('accept risk')}>Accept Risk</MenuItem>,
+            <MenuItem key="false_positive" onClick={() => handleAction('false positive')}>False Positive</MenuItem>
+          ]
+        );
+      case 'Dependabot':
+        return (
+          [
+            <MenuItem key="accept_risk" onClick={() => handleAction('accept risk')}>Accept Risk</MenuItem>,
+            <MenuItem key="false_positive" onClick={() => handleAction('false positive')}>False Positive</MenuItem>
+          ]
+        );
+      case 'SecretScan':
+        return (
+          [
+            <MenuItem key="accept_risk" onClick={() => handleAction('accept risk')}>Accept Risk</MenuItem>,
+            <MenuItem key="false_positive" onClick={() => handleAction('false_positive')}>False Positive</MenuItem>
+          ]
+        );
+      default:
+        return null;
+    }
+    }
+  } else {
+    return null;
+  }
+};
+
 
   // const handleScanNowClick = async () => {
   //   try {
@@ -270,23 +391,38 @@ const getTimeDifferenceString = (updatedAt) => {
                 <TableCell><h2>CVE ID</h2></TableCell>
                 <TableCell><h2>Path</h2></TableCell>
                 <TableCell><h2>Updated</h2></TableCell>
+                {userRole === 'admin' && <TableCell><h2>Actions</h2></TableCell>}
               </TableRow>
             </TableHead>
             <TableBody>
               {findings && findings.map((finding) => (
                 <TableRow key={finding.id}>
-                  <TableCell>{finding.id}</TableCell>
+                  <TableCell><h3>{finding.id}</h3></TableCell>
                   <TableCell>
                     <span style={{ backgroundColor: getSeverityColor(finding.security_severity_Level), color: '#fff', padding: '4px', borderRadius: '4px' }}>
                       {finding.security_severity_Level || "null"}
                     </span>
                   </TableCell>
-                  <TableCell>{finding.status}</TableCell>
-                  <TableCell>{finding.summary}</TableCell>
-                  <TableCell>{finding.tool}</TableCell>
-                  <TableCell>{finding.cve_id}</TableCell>
-                  <TableCell>{finding.pathIssue}</TableCell>
-                  <TableCell>{getTimeDifferenceString(finding.updatedAt)}</TableCell>
+                  <TableCell><h3>{finding.status}</h3></TableCell>
+                  <TableCell><h3>{finding.summary}</h3></TableCell>
+                  <TableCell><h3>{finding.tool}</h3></TableCell>
+                  <TableCell><h3>{finding.cve_id}</h3></TableCell>
+                  <TableCell><h3>{finding.pathIssue}</h3></TableCell>
+                  <TableCell><h3>{getTimeDifferenceString(finding.updatedAt)}</h3></TableCell>
+                  {userRole === 'admin' && (
+                                <TableCell>
+                                <Button aria-controls="simple-menu" aria-haspopup="true" onClick={handleClick} data-issue-number={finding.issueNumber} data-tool={finding.tool} data-status={finding.status}>
+                                  ...
+                                </Button>
+                                <Menu
+                                  anchorEl={anchorEl}
+                                  open={Boolean(anchorEl)}
+                                  onClose={handleClose}
+                                >
+                                  {renderMenuItems()}
+                                </Menu>
+                              </TableCell>
+                            )}
                 </TableRow>
               ))}
             </TableBody>

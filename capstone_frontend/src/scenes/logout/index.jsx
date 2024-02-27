@@ -7,6 +7,7 @@ const LogOut = ({ onLogout, redirectToDefault }) => {
     localStorage.removeItem("sessionToken");
     localStorage.removeItem("userRole");
     localStorage.removeItem("orgId");
+    localStorage.removeItem("userName");
     // Call the onLogout function to update the isLoggedIn state in the parent component
     onLogout(false);
     redirectToDefault();

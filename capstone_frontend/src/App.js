@@ -18,7 +18,9 @@ function App() {
   const [role, setRole] = useState("jksdfjd");
   const [organizationId, setOrganizationId] = useState(localStorage.getItem("orgId"))
   const [accessToken, setAccessToken] = useState(localStorage.getItem("sessionToken"));
+  const [userName, setUserName] = useState(localStorage.getItem("userName"));
 
+  console.log("jijij "+localStorage.getItem("userName"));
 
   // Handling so that on refresh the user is routed to the same page.
   useEffect(() => {
@@ -42,7 +44,7 @@ function App() {
 
   const redirectToDefault = () => {
     // console.log("Ritwik")
-    navigate("/");
+    navigate("/scans");
   };
 
   // console.log(role);
@@ -55,16 +57,17 @@ function App() {
           <ThemeProvider theme={theme}>
             <CssBaseline />
             <div className="app">
-            <Sidebar isSidebar={isSidebar} userRole={role} />
+            <Sidebar isSidebar={isSidebar} userRole={role} userName={localStorage.getItem("userName")} />
               <main className="content">
                 <Topbar setIsSidebar={setIsSidebar} />
                 <Routes>
                   <Route path="/" element={<Dashboard />} />
                   {/* <Route path="/dashboard" element={<Dashboard />} /> */}
-                  <Route path="/findings" element={<Findings userRole={role} />}  />
+                  <Route path="/findings" element={<Findings />}  />
                   <Route path="/tickets" element={<Tickets />} />
                   <Route path="/logout" element={<LogOut onLogout={handleIsLoggedIn} redirectToDefault={redirectToDefault} />} />
                   <Route path="/scans" element={<Scans/>} />
+                  <Route path="/runbook" element={<Scans/>} />
                 </Routes>
               </main>
             </div>
@@ -79,13 +82,13 @@ function App() {
           <ThemeProvider theme={theme}>
             <CssBaseline />
             <div className="app">
-              <Sidebar isSidebar={isSidebar} userRole={role} />
+              <Sidebar isSidebar={isSidebar} userRole={role} userName={localStorage.getItem("userName")} />
               <main className="content">
                 <Topbar setIsSidebar={setIsSidebar} />
                 <Routes>
                   <Route path="/" element={<Dashboard />} />
                   {/* <Route path="/dashboard" element={<Dashboard />} /> */}
-                  <Route path="/findings" element={<Findings userRole={role} />}  />
+                  <Route path="/findings" element={<Findings />}  />
                   {/* <Route path="/tickets" element={<Tickets />} /> */}
                   <Route path="/logout" element={<LogOut onLogout={handleIsLoggedIn} redirectToDefault={redirectToDefault} />} />
                   <Route path="/scans" element={<Scans/>} />

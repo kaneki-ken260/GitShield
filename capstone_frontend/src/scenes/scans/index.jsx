@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import CircularProgress from "@mui/material/CircularProgress";
 import { Button } from '@mui/material';
+import axios from 'axios';
 
 const Scans = () => {
 
@@ -9,14 +10,26 @@ const Scans = () => {
     const [organizationId, setOrganizationId] = useState(localStorage.getItem("orgId"));
     const [accessToken, setAccessToken] = useState(localStorage.getItem("sessionToken"));
 
-    console.log("Hello: " + accessToken)
-    console.log("Hello21321: " + organizationId)
+    // console.log("Hello: " + accessToken)
+    // console.log("Hello21321: " + organizationId)
     
 
     const handleScanNowClick = async () => {
         try {
           setLoading(true);
-          await fetch(`http://localhost:8090/fetch-and-save?accessToken=${accessToken}&organizationId=${organizationId}`);
+          //await fetch(`http://localhost:8090/fetch-and-save?accessToken=${accessToken}&organizationId=${organizationId}`);
+          await axios.post(
+            `http://localhost:8090/fetch-and-save`,
+            { },
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    // 'Authorization': `Bearer ${accessToken}`,
+                    'accessToken': accessToken,
+                    'organizationId':organizationId
+                }
+            }
+        );
           console.log("Scan initiated successfully");
         } catch (error) {
           console.error("Error initiating scan:", error);

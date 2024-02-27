@@ -1,0 +1,49 @@
+body {
+    margin: 0;
+    background-color: rgb(158, 13, 210);
+    position: relative; /* Add relative positioning to enable absolute positioning of circles */
+}
+
+.container {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.card {
+    text-align: center;
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Add styles for circles */
+.circle {
+    position: absolute;
+    border-radius: 50%;
+    background-color: black;
+}
+
+.circle-1 {
+    width: 100px;
+    height: 100px;
+    top: -20%;
+    left: 40%;
+}
+
+.circle-2 {
+    width: 150px;
+    height: 150px;
+    bottom: -20%;
+    left: 60%;
+}
+
+.circle-3 {
+    width: 80px;
+    height: 80px;
+    top: 30%;
+    right: 30%;
+}

@@ -1,13 +1,13 @@
 import { useTheme } from "@mui/material";
-import { ResponsiveBar } from "@nivo/bar";
-import { tokens } from "../theme";
+import { Bar } from 'react-chartjs-2';
+import { Chart, registerables } from 'chart.js';
+Chart.register(...registerables);
 
 const BarChartSeverity = ({ findings, isDashboard = false }) => {
   const theme = useTheme();
-  const colors = tokens(theme.palette.mode);
 
-  if (findings == null) return null;
-  
+  if (!findings || findings.length === 0) return null;
+
   // Group the data by severity level and status, and calculate the count for each combination
   const groupedData = Object.values(findings.reduce((acc, curr) => {
     const key = curr.security_severity_Level;
@@ -22,102 +22,42 @@ const BarChartSeverity = ({ findings, isDashboard = false }) => {
     return acc;
   }, {}));
 
-  // console.log(groupedData);
+  // Prepare chart data
+  const chartData = {
+    labels: groupedData.map(item => item.security_severity_level), // X-axis labels
+    datasets: [{
+      label: 'Count',
+      data: groupedData.map(item => item.open + item.mitigated), // Y-axis data
+      backgroundColor: [
+        'rgba(255, 99, 132, 0.2)',
+        'rgba(255, 159, 64, 0.2)',
+        'rgba(255, 205, 86, 0.2)',
+        'rgba(75, 192, 192, 0.2)'
+      ],
+      borderColor: [
+        'rgb(255, 99, 132)',
+        'rgb(255, 159, 64)',
+        'rgb(255, 205, 86)',
+        'rgb(75, 192, 192)'
+      ],
+      borderWidth: 1
+    }]
+  };
+
+  const chartOptions = {
+    scales: {
+      y: {
+        beginAtZero: true
+      }
+    }
+  };
 
   return (
-    <ResponsiveBar
-      data={groupedData}
-      theme={{
-        axis: {
-          domain: {
-            line: {
-              stroke: colors.grey[100],
-            },
-          },
-          legend: {
-            text: {
-              fill: colors.grey[100],
-            },
-          },
-          ticks: {
-            line: {
-              stroke: colors.grey[100],
-              strokeWidth: 1,
-            },
-            text: {
-              fill: colors.grey[100],
-            },
-          },
-        },
-        legends: {
-          text: {
-            fill: colors.grey[100],
-          },
-        },
-      }}
-      keys={["open", "mitigated"]} // Use the status as keys
-      indexBy="security_severity_level"
-      margin={{ top: 50, right: 130, bottom: 50, left: 60 }}
-      padding={0.3}
-      valueScale={{ type: "linear" }}
-      indexScale={{ type: "band", round: true }}
-      colors={{ scheme: "nivo" }}
-      borderColor={{
-        from: "color",
-        modifiers: [["darker", "1.6"]],
-      }}
-      axisBottom={{
-        tickSize: 5,
-        tickPadding: 5,
-        tickRotation: 0,
-        legend: isDashboard ? undefined : "Severity Level",
-        legendPosition: "middle",
-        legendOffset: 32,
-      }}
-      axisLeft={{
-        tickSize: 5,
-        tickPadding: 5,
-        tickRotation: 0,
-        legend: isDashboard ? undefined : "Count",
-        legendPosition: "middle",
-        legendOffset: -40,
-      }}
-      enableLabel={false}
-      labelSkipWidth={12}
-      labelSkipHeight={12}
-      labelTextColor={{
-        from: "color",
-        modifiers: [["darker", 1.6]],
-      }}
-      legends={[
-        {
-          dataFrom: "keys",
-          anchor: "bottom-right",
-          direction: "column",
-          justify: false,
-          translateX: 120,
-          translateY: 0,
-          itemsSpacing: 2,
-          itemWidth: 100,
-          itemHeight: 20,
-          itemDirection: "left-to-right",
-          itemOpacity: 0.85,
-          symbolSize: 20,
-          effects: [
-            {
-              on: "hover",
-              style: {
-                itemOpacity: 1,
-              },
-            },
-          ],
-        },
-      ]}
-      role="application"
-      barAriaLabel={function (e) {
-        return e.id + ": " + e.formattedValue + " in severity level: " + e.indexValue;
-      }}
-    />
+    <div style={{ height: "100%" }}> {/* Set height of the chart container */}
+      <h2>Severity Bar Chart</h2>
+      <Bar data={chartData} options={chartOptions} height={150} /> {/* Specify height here */}
+    </div>
+    
   );
 };
 

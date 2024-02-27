@@ -20,6 +20,7 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
 import Pagination from "@mui/material/Pagination";
+import axios from "axios";
 
 const Tickets = () => {
   const theme = useTheme();
@@ -32,13 +33,25 @@ const Tickets = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const [loading, setLoading] = useState(false);
   const [priorityChange, setPriorityChange] = useState(false);
+  const [organizationId, setOrganizationId] = useState(localStorage.getItem("orgId"));
+  const [accessToken, setAccessToken] = useState(localStorage.getItem("sessionToken"));
 
   const fetchData = async () => {
     try {
-      const response = await fetch(
-        `http://localhost:8090/fetchTickets?page=${currentPage}&size=${pageSize}&priority=${priority}`
-      );
-      const jsonResponse = await response.json();
+      const response = await axios.post(
+        `http://localhost:8090/fetchTickets?page=${currentPage}&size=${pageSize}&priority=${priority}`,
+        { },
+        {
+            headers: {
+                'Content-Type': 'application/json',
+                // 'Authorization': `Bearer ${accessToken}`,
+                'accessToken': accessToken,
+                'organizationId':organizationId
+            }
+        }
+    );
+      console.log(response)
+      const jsonResponse = await response.data;
       console.log(jsonResponse.content);
       setTickets(jsonResponse.content);
       setTotalPages(jsonResponse.totalPages);
@@ -237,7 +250,6 @@ const getStatusColor = (status) => {
                 <TableCell><h2>Priority</h2></TableCell>
                 <TableCell><h2>Scan Type</h2></TableCell>
                 <TableCell><h2>Status</h2></TableCell>
-                <TableCell><h2>Created By</h2></TableCell>
                 <TableCell><h2>Summary</h2></TableCell>
                 <TableCell><h2>Issue Type</h2></TableCell>
                 <TableCell><h2>Updated</h2></TableCell>
@@ -258,7 +270,6 @@ const getStatusColor = (status) => {
                       {ticket.status || "null"}
                     </span>
                   </TableCell>
-                  <TableCell>{ticket.createdBy}</TableCell>
                   <TableCell>{ticket.summary}</TableCell>
                   <TableCell>{ticket.issueType}</TableCell>
                   <TableCell>{getTimeDifferenceString(ticket.updatedAt)}</TableCell>
